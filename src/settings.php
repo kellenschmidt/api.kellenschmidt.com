@@ -21,7 +21,7 @@ return [
             "host" => "localhost",
             "dbname" => "url_shortener",
             "user" => "root",
-            "pass" => "PASSWORD"
+            "pass" => getenv('MYSQL_PASS')
         ],
     ],
 ];
