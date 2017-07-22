@@ -1,6 +1,16 @@
 <?php
 
 /*************************************
+                Headers
+*************************************/
+
+// Allow CORS for cross-domain requests
+// header('Access-Control-Allow-Origin: https://kellenschmidt.com, https://urlshortener.kellenschmidt.com, https://urlshortenerphp.kellenschmidt.com');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET,PUT,POST,DELETE,PATCH,OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+/*************************************
                 Functions
 *************************************/
 
@@ -26,7 +36,7 @@ function isUnusedCode($_this, $testCode) {
     // Create and execute query to get all codes in database
     $get_all_codes_query = "SELECT * 
                             FROM links
-                            WHERE code = :code";
+                            WHERE code = BINARY :code";
 
     $stmt = $_this->db->prepare($get_all_codes_query);
     $stmt->bindParam("code", $testCode);
@@ -130,11 +140,13 @@ $app->get('/modal/[{name}]', function ($request, $response, $args) {
 
 });
 
-// Return all URLs
+// Return all visible URLs
 $app->get('/urls', function ($request, $response, $args) {
 
     $get_urls_sql = "SELECT * 
-                     FROM links";
+                     FROM links
+                     WHERE visible=1
+                     ORDER BY date_created DESC";
     $stmt = $this->db->prepare($get_urls_sql);
 
     try {
@@ -144,7 +156,11 @@ $app->get('/urls', function ($request, $response, $args) {
         return $this->response->withJson($e);
     }
 
-    return $this->response->withJson($urls);
+    $return = array(
+        "data" => $urls
+    );
+
+    return $this->response->withJson($return);
 
 });
 
@@ -152,14 +168,20 @@ $app->get('/urls', function ($request, $response, $args) {
 $app->post('/url', function ($request, $response, $args) {
 
     $input = $request->getParsedBody();
+    $longUrl = $input['long_url'];
+
+    // Prepend long url with http:// if it doesn't have it already
+    if(substr($longUrl, 0, 4) != 'http') {
+        $longUrl = 'http://' . $longUrl;
+    }
 
     // Test if long URL is already in database
     $existing_urls_query = "SELECT code 
                             FROM links 
-                            WHERE long_url = :long_url";
+                            WHERE long_url = BINARY :long_url";
 
     $stmt = $this->db->prepare($existing_urls_query);
-    $stmt->bindParam("long_url", $input['long_url']);
+    $stmt->bindParam("long_url", $longUrl);
 
     try {
         $stmt->execute();
@@ -185,7 +207,7 @@ $app->post('/url', function ($request, $response, $args) {
 
         $stmt = $this->db->prepare($insert_url_sql);
         $stmt->bindParam("code", $code);
-        $stmt->bindParam("long_url", $input['long_url']);
+        $stmt->bindParam("long_url", $longUrl);
         $stmt->bindParam("date_created", $currentDateTime);
     }
 
@@ -194,7 +216,7 @@ $app->post('/url', function ($request, $response, $args) {
         $update_url_sql = "UPDATE links
                            SET date_created = :date_created,
                                visible = 1
-                           WHERE code = :code";
+                           WHERE code = BINARY :code";
 
         $stmt = $this->db->prepare($update_url_sql);
         $stmt->bindParam("date_created", $currentDateTime);
@@ -208,12 +230,29 @@ $app->post('/url', function ($request, $response, $args) {
         return $this->response->withJson($e);
     }
 
+    // Get count for newly added/updated link
+    $get_count_sql = "SELECT count
+                      FROM links
+                      WHERE code = BINARY :code";
+
+    $stmt = $this->db->prepare($get_count_sql);
+    $stmt->bindParam("code", $code);
+
+    try {
+        $stmt->execute();
+        $count = $stmt->fetchObject()->count;
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
     // Log "create link" interaction
     logInteraction($this, 3, $code);
 
     $return = array(
         "code" => $code,
-        "date_created" => $currentDateTime
+        "long_url" => $longUrl,
+        "date_created" => $currentDateTime,
+        "count" => $count
     );
 
     return $this->response->withJson($return);
@@ -227,7 +266,7 @@ $app->put('/url', function ($request, $response, $args) {
 
     $set_visible_sql = "UPDATE links
                         SET visible = 0
-                        WHERE code = :code";
+                        WHERE code = BINARY :code";
     
     $stmt = $this->db->prepare($set_visible_sql);
     $stmt->bindParam("code", $input['code']);
@@ -241,16 +280,16 @@ $app->put('/url', function ($request, $response, $args) {
     // Log "remove link" interaction
     logInteraction($this, 1, $input['code']);
 
-    return $this->response->withJson(array("rows affected" => $stmt->rowCount()));
+    return $this->response->withJson(array("rows_affected" => $stmt->rowCount()));
 
 });
 
 // Increment number of page visits when page is visited
-$app->put('/hit/[{code}]', function ($request, $response, $args) {
+$app->post('/hit/[{code}]', function ($request, $response, $args) {
 
     $increment_count_sql = "UPDATE links
                             SET count = count + 1
-                            WHERE code = :code";
+                            WHERE code = BINARY :code";
     
     $stmt = $this->db->prepare($increment_count_sql);
     $stmt->bindParam("code", $args['code']);
@@ -261,9 +300,23 @@ $app->put('/hit/[{code}]', function ($request, $response, $args) {
         return $this->response->withJson($e);
     }
 
+    $get_link_sql = "SELECT long_url
+                     FROM links
+                     WHERE code = BINARY :code";
+
+    $stmt = $this->db->prepare($get_link_sql);
+    $stmt->bindParam("code", $args['code']);
+
+    try {
+        $stmt->execute();
+        $long_url = $stmt->fetchObject()->long_url;
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
     // Log "click link" interaction
     logInteraction($this, 2, $args['code']);
 
-    return $this->response->withJson(array("rows affected" => $stmt->rowCount()));
+    return $this->response->withJson(array("long_url" => $long_url));
 
 });
