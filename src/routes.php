@@ -4,9 +4,16 @@
                 Headers
 *************************************/
 
-// Allow CORS for cross-domain requests
-// header('Access-Control-Allow-Origin: https://kellenschmidt.com, https://urlshortener.kellenschmidt.com, https://urlshortenerphp.kellenschmidt.com');
-header('Access-Control-Allow-Origin: *');
+// Set header to allow CORS for cross-domain requests
+$http_origin = $_SERVER['HTTP_ORIGIN'];
+$regex = "/^(https?:\/\/(?:.+\.)?kellenschmidt\.com(?::\d{1,5})?)$/";
+
+if(preg_match($regex, $http_origin)) {
+    header("Access-Control-Allow-Origin: $http_origin");
+} else {
+    header("Access-Control-Allow-Origin: null");
+}
+
 header('Access-Control-Allow-Methods: GET,PUT,POST,DELETE,PATCH,OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -80,7 +87,8 @@ function logInteraction($_this, $type, $code) {
     $stmt->bindParam("ip_address", $ip_address);
     $stmt->bindParam("browser", $browser);
     $stmt->bindParam("operating_system", $operating_system);
-    $stmt->bindParam("interaction_date", date('Y-m-d H:i:s'));
+    $currentDateTime = date('Y-m-d H:i:s');
+    $stmt->bindParam("interaction_date", $currentDateTime);
 
     try {
         $stmt->execute();
@@ -90,33 +98,75 @@ function logInteraction($_this, $type, $code) {
     
 }
 
+// Log information about the user and the page that was visited
+function logPageVisit($_this, $input) {
+    // Get values for setting browser and operating system
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    preg_match('#\((.*?)\)#', $user_agent, $match);
+    $start = strrpos($user_agent, ')') + 2;
+    $end = strrpos($user_agent, ' ');
+
+    // If document.referrer exists
+    if(isset($input['referrer'])) {
+        $referrer = $input['referrer'];
+    } else if(isset($_SERVER['HTTP_REFERER'])) {
+        $referrer = $_SERVER['HTTP_REFERER'];
+    } else {
+        $referrer = "";
+    }
+
+    // If referrer and site are the same set referrer to blank
+    if($input['site'] == substr($referrer, 8, -1)) {
+        $referrer = "";
+    }
+    
+    $log_visit_sql = "INSERT INTO page_visits
+                      SET site = :site,
+                          ip_address = :ip_address,
+                          browser = :browser,
+                          operating_system = :operating_system,
+                          referrer = :referrer,
+                          page_visit_datetime = :page_visit_datetime";
+
+    $stmt = $_this->db->prepare($log_visit_sql);
+    $stmt->bindParam("site", $input['site']);
+    $stmt->bindParam("ip_address", $_SERVER['REMOTE_ADDR']);
+    $stmt->bindParam("browser", substr($user_agent, $start, $end-$start));
+    $stmt->bindParam("operating_system", $match[1]);
+    $stmt->bindParam("referrer", $referrer);
+    $currentDateTime = date('Y-m-d H:i:s');
+    $stmt->bindParam("page_visit_datetime", $currentDateTime);
+
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        return $_this->response->withJson($e);
+    }
+}
+
 /*************************************
                 Routes
 *************************************/
 
 // Home page
 $app->get('/', function ($request, $response, $args) {
-
-    // Get ServerName user is hitting
-    $server_name = $_SERVER['SERVER_NAME'];
+    $input = array('site' => 'api.kellenschmidt.com', 'referrer' => null);
     
-    // Log "visit page" interaction
-    logInteraction($this, 0, $server_name);
+    // Log information about the visitor whenever the homepage is visited
+    logPageVisit($this, $input);
 
     // Render index view
     return $this->renderer->render($response, 'index.phtml', $args);
     
 });
 
-// Log home page visit interaction
+// Log information whenever a home page is visited
 $app->post('/page-visit', function ($request, $response, $args) {
+    $input = $request->getParsedBody();
     
-    // Get ServerName user is hitting
-    $server_name = $_SERVER['SERVER_NAME'];
-    
-    // Log "visit page" interaction
-    logInteraction($this, 0, $server_name);
+    logPageVisit($this, $input);
 
+    return $this->response->withJson();
 });
 
 // Get content to put in modal
