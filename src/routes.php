@@ -1,5 +1,7 @@
 <?php
 
+use \Firebase\JWT\JWT;
+
 /*************************************
                 Headers
 *************************************/
@@ -10,6 +12,8 @@ $regex = "/^(https?:\/\/(?:.+\.)?kellenschmidt\.com(?::\d{1,5})?)$/";
 
 if(preg_match($regex, $http_origin)) {
     header("Access-Control-Allow-Origin: $http_origin");
+} else if($_SERVER['HTTP_ORIGIN'] == 'http://localhost:4200') {
+    header("Access-Control-Allow-Origin: http://localhost:4200");
 } else {
     header("Access-Control-Allow-Origin: null");
 }
@@ -142,6 +146,85 @@ function logPageVisit($_this, $input) {
     } catch (Exception $e) {
         return $_this->response->withJson($e);
     }
+
+    return array('rows_affected' => $stmt->rowCount());
+}
+
+function generateToken($email, $_this) {
+
+    // Get token_id for next token to be inserted
+    $getNextTokenIdSql = "SHOW TABLE STATUS LIKE 'tokens'";
+
+    $stmt = $_this->db->prepare($getNextTokenIdSql);
+
+    try {
+        $stmt->execute();
+        $nextTokenId = $stmt->fetchObject()->Auto_increment;
+    } catch (Exception $e) {
+        return $_this->response->withJson($e);
+    }
+
+    // Get user_id for sub of JWT
+    $getUserIdSql = "SELECT user_id
+                     FROM users
+                     WHERE email = :email";
+
+    $stmt = $_this->db->prepare($getUserIdSql);
+    $stmt->bindParam("email", $email);
+    
+    try {
+        $stmt->execute();
+        $userId = $stmt->fetchObject()->user_id;
+    } catch (Exception $e) {
+        return $_this->response->withJson($e);
+    }
+
+    // Create JWT claims
+    $header = array(
+        "alg" => "HS256",
+        "typ" => "JWT"
+    );
+
+    $payload = array(
+        "iss" => $_SERVER['HTTP_ORIGIN'], // Domain name that issued the token i.e. https://kellenschmidt.com
+        "iat" => time(),
+        "exp" => time() + (3600 * 24 * 30), // Expiration time: 30 days
+        "jti" => $nextTokenId, // token_id of the token that is being created
+        "sub" => $userId // user_id of the user that the token is being created for
+    );
+
+    // Create JWT
+    try {
+        $jwt = JWT::encode($header . "." . $payload, getenv('JWT_SECRET'));
+    } catch (Exception $e) {
+        return $_this->response->withJson($e);
+    }
+
+    // Insert JWT into database
+    $insertTokenSql = "INSERT INTO tokens
+                       SET user_id = :user_id,
+                           token = :token,
+                           creation_date = :creation_date,
+                           expiration_date = :expiration_date";
+
+    $stmt = $_this->db->prepare($insertTokenSql);
+    $stmt->bindParam("user_id", $payload['sub']);
+    $stmt->bindParam("token", $jwt);
+    $stmt->bindParam("creation_date", $payload['iat']);
+    $stmt->bindParam("expiration_date", $payload['exp']);
+
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        return $_this->response->withJson($e);
+    }
+
+    // Return JWT
+    return $jwt;
+}
+
+function isAuthenticated($jwt, $_this) {
+
 }
 
 /*************************************
@@ -161,12 +244,29 @@ $app->get('/', function ($request, $response, $args) {
 });
 
 // Log information whenever a home page is visited
+$app->get('/test', function ($request, $response, $args) {
+    // Get token_id for next token to be inserted
+    $getNextTokenIdSql = "SHOW TABLE STATUS LIKE 'tokens'";
+
+    $stmt = $this->db->prepare($getNextTokenIdSql);
+
+    try {
+        $stmt->execute();
+        $nextTokenId = $stmt->fetchObject()->Auto_increment;
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    return $this->response->withJson(array("token_id" => $nextTokenId));
+});
+
+// Log information whenever a home page is visited
 $app->post('/page-visit', function ($request, $response, $args) {
     $input = $request->getParsedBody();
     
-    logPageVisit($this, $input);
+    $return = logPageVisit($this, $input);
 
-    return $this->response->withJson();
+    return $this->response->withJson($return);
 });
 
 // Get content to put in modal
@@ -369,4 +469,65 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
 
     return $this->response->withJson(array("long_url" => $long_url));
 
+});
+
+$app->post('/urlshortener/register', function ($request, $response, $args) {
+    $requestArgs = $request->getParsedBody();
+
+    $getExisitingUserSql = "SELECT email
+                            FROM users
+                            WHERE email = :email";
+
+    $stmt = $this->db->prepare($getExisitingUserSql);
+    $stmt->bindParam("email", $requestArgs['email']);
+    
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    // Return error if email already exists in database
+    if($stmt->fetchObject() != NULL) {
+        $this->response->withJson(array("error" => "Email already exists"));
+    } 
+    // Continue as normal because account does already exist
+    else {
+        $insertUserSql = "INSERT INTO users
+                          SET email = :email,
+                              name = :name,
+                              phone = :phone,
+                              password = :password"; // Defaults set for creation_date, updated_date, verified_phone
+
+        $stmt = $this->db->prepare($insertUserSql);
+        $stmt->bindParam("email", $requestArgs['email']);
+        $stmt->bindParam("name", $requestArgs['name']);
+        $stmt->bindParam("phone", $requestArgs['phone']);
+        $stmt->bindParam("password", $requestArgs['password']);
+
+        try {
+            $stmt->execute();
+        } catch (Exception $e) {
+            return $this->response->withJson($e);
+        }
+
+        // Generate token
+        $token = generateToken($requestArgs['email'], $this);
+
+    }
+    
+});
+
+$app->post('/urlshortener/login', function ($request, $response, $args) {
+    $requestArgs = $request->getParsedBody();
+
+    // Get entered email and password from login form
+    // SQL query to get db data for user with entered email
+    // Return error if email does not exist in database
+    // Check if hash of entered password matches hashed password in database
+        // If no, return invalid password error
+        // If yes, continue
+    // Delete exisiting token(s) for user_id retrieved from SQL query
+    // Generate new token
+    
 });
