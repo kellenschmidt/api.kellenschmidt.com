@@ -33,7 +33,7 @@ header('Access-Control-Allow-Headers: Content-Type');
  *                         to select from
  * @return string
  */
- function random_str($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_') {
+function random_str($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_') {
     $str = '';
     $max = mb_strlen($keyspace, '8bit') - 1;
     for ($i = 0; $i < $length; ++$i) {
@@ -56,7 +56,8 @@ function isUnusedCode($_this, $testCode) {
         $stmt->execute();
         $code = $stmt->fetchObject();
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
     }
 
     if($code == NULL) {
@@ -91,13 +92,14 @@ function logInteraction($_this, $type, $code) {
     $stmt->bindParam("ip_address", $ip_address);
     $stmt->bindParam("browser", $browser);
     $stmt->bindParam("operating_system", $operating_system);
-    $currentDateTime = date('Y-m-d H:i:s');
+    $currentDateTime = date('Y/m/d H:i:s');
     $stmt->bindParam("interaction_date", $currentDateTime);
 
     try {
         $stmt->execute();
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
     }
     
 }
@@ -138,13 +140,14 @@ function logPageVisit($_this, $input) {
     $stmt->bindParam("browser", substr($user_agent, $start, $end-$start));
     $stmt->bindParam("operating_system", $match[1]);
     $stmt->bindParam("referrer", $referrer);
-    $currentDateTime = date('Y-m-d H:i:s');
+    $currentDateTime = date('Y/m/d H:i:s');
     $stmt->bindParam("page_visit_datetime", $currentDateTime);
 
     try {
         $stmt->execute();
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
     }
 
     return array('rows_affected' => $stmt->rowCount());
@@ -161,7 +164,8 @@ function generateToken($email, $_this) {
         $stmt->execute();
         $nextTokenId = $stmt->fetchObject()->Auto_increment;
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
     }
 
     // Get user_id for sub of JWT
@@ -176,7 +180,8 @@ function generateToken($email, $_this) {
         $stmt->execute();
         $userId = $stmt->fetchObject()->user_id;
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
     }
 
     // Create JWT claims
@@ -185,38 +190,65 @@ function generateToken($email, $_this) {
         "typ" => "JWT"
     );
 
+    // Get IP address of current browsing session
+    $ipAddress = $_SERVER['REMOTE_ADDR'];
+
     $payload = array(
         "iss" => $_SERVER['HTTP_ORIGIN'], // Domain name that issued the token i.e. https://kellenschmidt.com
         "iat" => time(),
         "exp" => time() + (3600 * 24 * 30), // Expiration time: 30 days
         "jti" => $nextTokenId, // token_id of the token that is being created
-        "sub" => $userId // user_id of the user that the token is being created for
+        "sub" => $userId, // user_id of the user that the token is being created for
+        "ipa" => $ipAddress
     );
+
+    $claims = array_merge($header, $payload);
+    echo "Payload: " . json_encode($payload) . "\nclaims: $claims\n";
 
     // Create JWT
     try {
-        $jwt = JWT::encode($header . "." . $payload, getenv('JWT_SECRET'));
+        $jwt = JWT::encode($claims, getenv('JWT_SECRET'));
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
+    }
+
+    // Remove old JWTs from database
+    $removeOldTokensSql = "DELETE FROM tokens
+                           WHERE user_id = :user_id
+                           AND ip_address = :ip_address";
+
+    $stmt = $_this->db->prepare($removeOldTokensSql);
+    $stmt->bindParam("user_id", $payload['sub']);
+    $stmt->bindParam("ip_address", $ipAddress);
+
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        echo json_encode($e);
+        return NULL;
     }
 
     // Insert JWT into database
     $insertTokenSql = "INSERT INTO tokens
                        SET user_id = :user_id,
                            token = :token,
+                           ip_address = :ip_address,
                            creation_date = :creation_date,
                            expiration_date = :expiration_date";
 
     $stmt = $_this->db->prepare($insertTokenSql);
     $stmt->bindParam("user_id", $payload['sub']);
     $stmt->bindParam("token", $jwt);
+    $stmt->bindParam("ip_address", $ipAddress);
     $stmt->bindParam("creation_date", $payload['iat']);
     $stmt->bindParam("expiration_date", $payload['exp']);
 
     try {
         $stmt->execute();
     } catch (Exception $e) {
-        return $_this->response->withJson($e);
+        echo json_encode($e);
+        return NULL;
     }
 
     // Return JWT
@@ -225,6 +257,41 @@ function generateToken($email, $_this) {
 
 function isAuthenticated($jwt, $_this) {
 
+}
+
+
+// Use token to get user_id from tokens table
+function getUserIdFromToken($_request, $_this) {
+
+    $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
+
+    // Return user_id of -1 when no authorization given
+    if(empty($jwt)) {
+        return -1;
+    }
+    
+    $getUser = "SELECT user_id
+                FROM tokens
+                WHERE token = :token";
+    
+    $stmt = $_this->db->prepare($getUser);
+    $stmt->bindParam("token", $jwt);
+    
+    try {
+        $stmt->execute();
+        $userId = $stmt->fetchObject()->user_id;
+    } catch (Exception $e) {
+        echo json_encode($e);
+        return NULL;
+    }
+
+    // Return error if token could not be found
+    if(empty($userId)) {
+        echo json_encode(array("error" => "Token could not be found"));
+        return NULL;
+    }
+
+    return $userId;
 }
 
 /*************************************
@@ -245,19 +312,8 @@ $app->get('/', function ($request, $response, $args) {
 
 // Log information whenever a home page is visited
 $app->get('/test', function ($request, $response, $args) {
-    // Get token_id for next token to be inserted
-    $getNextTokenIdSql = "SHOW TABLE STATUS LIKE 'tokens'";
-
-    $stmt = $this->db->prepare($getNextTokenIdSql);
-
-    try {
-        $stmt->execute();
-        $nextTokenId = $stmt->fetchObject()->Auto_increment;
-    } catch (Exception $e) {
-        return $this->response->withJson($e);
-    }
-
-    return $this->response->withJson(array("token_id" => $nextTokenId));
+    
+    return $this->response->withJson(array("Does_it_work" => true));
 });
 
 // Log information whenever a home page is visited
@@ -293,11 +349,17 @@ $app->get('/modal/[{name}]', function ($request, $response, $args) {
 // Return all visible URLs
 $app->get('/urls', function ($request, $response, $args) {
 
-    $get_urls_sql = "SELECT * 
-                     FROM links
-                     WHERE visible=1
-                     ORDER BY date_created DESC";
-    $stmt = $this->db->prepare($get_urls_sql);
+    // Get user_id from jwt in authorization header
+    $userId = getUserIdFromToken($request, $this);
+
+    $getUrlsSql = "SELECT * 
+                   FROM links
+                   WHERE visible = 1
+                   AND user_id = :user_id
+                   ORDER BY date_created DESC";
+    
+    $stmt = $this->db->prepare($getUrlsSql);
+    $stmt->bindParam("user_id", $userId);
 
     try {
         $stmt->execute();
@@ -317,6 +379,10 @@ $app->get('/urls', function ($request, $response, $args) {
 // Add new short URL to database
 $app->post('/url', function ($request, $response, $args) {
 
+    // Get user_id from jwt in authorization header
+    $userId = getUserIdFromToken($request, $this);
+
+    // Get request body
     $input = $request->getParsedBody();
     $longUrl = $input['long_url'];
 
@@ -326,12 +392,14 @@ $app->post('/url', function ($request, $response, $args) {
     }
 
     // Test if long URL is already in database
-    $existing_urls_query = "SELECT code 
-                            FROM links 
-                            WHERE long_url = BINARY :long_url";
+    $existingUrlsSql = "SELECT code 
+                        FROM links 
+                        WHERE long_url = BINARY :long_url
+                        AND user_id = :user_id";
 
-    $stmt = $this->db->prepare($existing_urls_query);
+    $stmt = $this->db->prepare($existingUrlsSql);
     $stmt->bindParam("long_url", $longUrl);
+    $stmt->bindParam("user_id", $userId);
 
     try {
         $stmt->execute();
@@ -341,7 +409,7 @@ $app->post('/url', function ($request, $response, $args) {
     }
 
     // Get current datetime
-    $currentDateTime = date('Y-m-d H:i:s');
+    $currentDateTime = date('Y/m/d H:i:s');
 
     // If URL is new, generate new code
     if($code == NULL) {
@@ -350,28 +418,32 @@ $app->post('/url', function ($request, $response, $args) {
             $code = random_str(3);
         } while (isUnusedCode($this, $code) == false);
 
-        $insert_url_sql = "INSERT INTO links 
-                           SET code = :code,
-                               long_url = :long_url,
-                               date_created = :date_created";
+        $insertUrlSql = "INSERT INTO links 
+                         SET code = :code,
+                             user_id = :user_id,
+                             long_url = :long_url,
+                             date_created = :date_created";
 
-        $stmt = $this->db->prepare($insert_url_sql);
+        $stmt = $this->db->prepare($insertUrlSql);
         $stmt->bindParam("code", $code);
+        $stmt->bindParam("user_id", $userId);
         $stmt->bindParam("long_url", $longUrl);
         $stmt->bindParam("date_created", $currentDateTime);
     }
 
     // Update URL, URL is already in database
     else {
-        $update_url_sql = "UPDATE links
-                           SET date_created = :date_created,
-                               visible = 1
-                           WHERE code = BINARY :code";
+        $updateUrlSql = "UPDATE links
+                         SET date_created = :date_created,
+                             visible = 1
+                         WHERE code = BINARY :code
+                         AND user_id = :user_id";
 
-        $stmt = $this->db->prepare($update_url_sql);
+        $stmt = $this->db->prepare($updateUrlSql);
         $stmt->bindParam("date_created", $currentDateTime);
         $code = $code->code;
         $stmt->bindParam("code", $code);
+        $stmt->bindParam("user_id", $userId);
     }
 
     try {
@@ -381,12 +453,14 @@ $app->post('/url', function ($request, $response, $args) {
     }
 
     // Get count for newly added/updated link
-    $get_count_sql = "SELECT count
-                      FROM links
-                      WHERE code = BINARY :code";
+    $getCountSql = "SELECT count
+                    FROM links
+                    WHERE code = BINARY :code
+                    AND user_id = :user_id";
 
-    $stmt = $this->db->prepare($get_count_sql);
+    $stmt = $this->db->prepare($getCountSql);
     $stmt->bindParam("code", $code);
+    $stmt->bindParam("user_id", $userId);
 
     try {
         $stmt->execute();
@@ -400,6 +474,7 @@ $app->post('/url', function ($request, $response, $args) {
 
     $return = array(
         "code" => $code,
+        "user_id" => $userId,
         "long_url" => $longUrl,
         "date_created" => $currentDateTime,
         "count" => $count
@@ -412,14 +487,19 @@ $app->post('/url', function ($request, $response, $args) {
 // Change the visibility state to hidden
 $app->put('/url', function ($request, $response, $args) {
 
+    // Get user_id from jwt in authorization header
+    $userId = getUserIdFromToken($request, $this);
+
     $input = $request->getParsedBody();
 
-    $set_visible_sql = "UPDATE links
-                        SET visible = 0
-                        WHERE code = BINARY :code";
+    $setVisibleSql = "UPDATE links
+                      SET visible = 0
+                      WHERE code = BINARY :code
+                      AND user_id = :user_id";
     
-    $stmt = $this->db->prepare($set_visible_sql);
+    $stmt = $this->db->prepare($setVisibleSql);
     $stmt->bindParam("code", $input['code']);
+    $stmt->bindParam("user_id", $userId);
 
     try {
         $stmt->execute();
@@ -437,11 +517,11 @@ $app->put('/url', function ($request, $response, $args) {
 // Increment number of page visits when page is visited
 $app->post('/hit/[{code}]', function ($request, $response, $args) {
 
-    $increment_count_sql = "UPDATE links
-                            SET count = count + 1
-                            WHERE code = BINARY :code";
+    $incrementCountSql = "UPDATE links
+                          SET count = count + 1
+                          WHERE code = BINARY :code";
     
-    $stmt = $this->db->prepare($increment_count_sql);
+    $stmt = $this->db->prepare($incrementCountSql);
     $stmt->bindParam("code", $args['code']);
     
     try {
@@ -450,11 +530,11 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
         return $this->response->withJson($e);
     }
 
-    $get_link_sql = "SELECT long_url
-                     FROM links
-                     WHERE code = BINARY :code";
+    $getLinkSql = "SELECT long_url
+                   FROM links
+                   WHERE code = BINARY :code";
 
-    $stmt = $this->db->prepare($get_link_sql);
+    $stmt = $this->db->prepare($getLinkSql);
     $stmt->bindParam("code", $args['code']);
 
     try {
@@ -472,6 +552,7 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
 });
 
 $app->post('/urlshortener/register', function ($request, $response, $args) {
+    
     $requestArgs = $request->getParsedBody();
 
     $getExisitingUserSql = "SELECT email
@@ -489,45 +570,106 @@ $app->post('/urlshortener/register', function ($request, $response, $args) {
 
     // Return error if email already exists in database
     if($stmt->fetchObject() != NULL) {
-        $this->response->withJson(array("error" => "Email already exists"));
-    } 
-    // Continue as normal because account does already exist
-    else {
-        $insertUserSql = "INSERT INTO users
-                          SET email = :email,
-                              name = :name,
-                              phone = :phone,
-                              password = :password"; // Defaults set for creation_date, updated_date, verified_phone
-
-        $stmt = $this->db->prepare($insertUserSql);
-        $stmt->bindParam("email", $requestArgs['email']);
-        $stmt->bindParam("name", $requestArgs['name']);
-        $stmt->bindParam("phone", $requestArgs['phone']);
-        $stmt->bindParam("password", $requestArgs['password']);
-
-        try {
-            $stmt->execute();
-        } catch (Exception $e) {
-            return $this->response->withJson($e);
-        }
-
-        // Generate token
-        $token = generateToken($requestArgs['email'], $this);
-
+        return $this->response->withJson(array("error" => "Email already exists"));
     }
+
+    // Hash user's password
+    $hashedPassword = password_hash($requestArgs['password'], PASSWORD_DEFAULT);
+
+    // Continue as normal because account does already exist
+    $insertUserSql = "INSERT INTO users
+                        SET email = :email,
+                            name = :name,
+                            phone = :phone,
+                            password = :password"; // Defaults set for creation_date, updated_date, verified_phone
+
+    $stmt = $this->db->prepare($insertUserSql);
+    $stmt->bindParam("email", $requestArgs['email']);
+    $stmt->bindParam("name", $requestArgs['name']);
+    $stmt->bindParam("phone", $requestArgs['phone']);
+    $stmt->bindParam("password", $hashedPassword);
+
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    // Generate token
+    $token = generateToken($requestArgs['email'], $this);
+
+    return $this->response->withJson(array("token" => $token));
     
 });
 
 $app->post('/urlshortener/login', function ($request, $response, $args) {
+    
     $requestArgs = $request->getParsedBody();
 
-    // Get entered email and password from login form
     // SQL query to get db data for user with entered email
-    // Return error if email does not exist in database
-    // Check if hash of entered password matches hashed password in database
-        // If no, return invalid password error
-        // If yes, continue
-    // Delete exisiting token(s) for user_id retrieved from SQL query
-    // Generate new token
+    $getUserSql = "SELECT *
+                   FROM users
+                   WHERE email = :email";
+
+    $stmt = $this->db->prepare($getUserSql);
+    $stmt->bindParam("email", $requestArgs['email']);
     
+    try {
+        $stmt->execute();
+        $user = $stmt->fetch();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+    // Return error if email does not exist in database
+    if($user == NULL) {
+        return $this->response->withJson(array("error" => "No user with the given email"));
+    }
+
+    // Check if hash of entered password matches hashed password in database
+    if(!password_verify($requestArgs['password'], $user['password'])) {
+        // If no, return invalid password error
+        return $this->response->withJson(array("error" => "Email/password combination is incorrect"));
+    }
+
+    // Delete exisiting token(s) for user_id retrieved from SQL query
+    $deleteOldTokensSql = "DELETE FROM tokens
+                           WHERE user_id = :user_id
+                           AND ip_address = :ip_address";
+
+    $stmt = $this->db->prepare($deleteOldTokensSql);
+    $stmt->bindParam("user_id", $user['user_id']);
+    $stmt->bindParam("ip_address", $_SERVER['REMOTE_ADDR']);
+    
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    // Generate new token
+    $token = generateToken($requestArgs['email'], $this);
+    
+    // Return combined array with token and data about user
+    return $this->response->withJson(array_merge(array("token" => $token), $user));
+
+});
+
+$app->post('/urlshortener/logout', function ($request, $response, $args) {
+    
+    $token = $request->getHeaders()['HTTP_AUTHORIZATION'][0];
+    
+    $deleteToken = "DELETE FROM tokens
+                    WHERE token = :token";
+    
+    $stmt = $this->db->prepare($deleteToken);
+    $stmt->bindParam("token", $token);
+    
+    try {
+        $stmt->execute();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    return $this->response->withJson(array("rows_affected" => $stmt->rowCount()));
+
 });
