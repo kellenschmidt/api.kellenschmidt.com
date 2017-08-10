@@ -19,7 +19,7 @@ if(preg_match($regex, $http_origin)) {
 }
 
 header('Access-Control-Allow-Methods: GET,PUT,POST,DELETE,PATCH,OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 /*************************************
                 Functions
@@ -203,7 +203,6 @@ function generateToken($email, $_this) {
     );
 
     $claims = array_merge($header, $payload);
-    echo "Payload: " . json_encode($payload) . "\nclaims: $claims\n";
 
     // Create JWT
     try {
@@ -598,7 +597,23 @@ $app->post('/urlshortener/register', function ($request, $response, $args) {
     // Generate token
     $token = generateToken($requestArgs['email'], $this);
 
-    return $this->response->withJson(array("token" => $token));
+    // SQL query to get db data for user with entered email
+    $getUserSql = "SELECT *
+                   FROM users
+                   WHERE email = :email";
+
+    $stmt = $this->db->prepare($getUserSql);
+    $stmt->bindParam("email", $requestArgs['email']);
+    
+    try {
+        $stmt->execute();
+        $user = $stmt->fetch();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    // Return combined array with token and data about user
+    return $this->response->withJson(array("token" => $token, "user" => $user));
     
 });
 
@@ -650,7 +665,7 @@ $app->post('/urlshortener/login', function ($request, $response, $args) {
     $token = generateToken($requestArgs['email'], $this);
     
     // Return combined array with token and data about user
-    return $this->response->withJson(array_merge(array("token" => $token), $user));
+    return $this->response->withJson(array("token" => $token, "user" => $user));
 
 });
 
