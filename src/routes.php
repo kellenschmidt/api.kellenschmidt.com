@@ -286,8 +286,7 @@ function getUserIdFromToken($_request, $_this) {
 
     // Return error if token could not be found
     if(empty($userId)) {
-        echo json_encode(array("error" => "Token could not be found"));
-        return NULL;
+        throw new Exception("Token not found");
     }
 
     return $userId;
@@ -312,7 +311,7 @@ $app->get('/', function ($request, $response, $args) {
 // Log information whenever a home page is visited
 $app->get('/test', function ($request, $response, $args) {
     
-    return $this->response->withJson(array("Does_it_work" => true));
+    return $this->response->withJson(array("Does it work?" => true));
 });
 
 // Log information whenever a home page is visited
@@ -349,7 +348,11 @@ $app->get('/modal/[{name}]', function ($request, $response, $args) {
 $app->get('/urls', function ($request, $response, $args) {
 
     // Get user_id from jwt in authorization header
-    $userId = getUserIdFromToken($request, $this);
+    try {
+        $userId = getUserIdFromToken($request, $this);
+    } catch (Exception $e) {
+        return $this->response->withJson($e->getMessage(), 403);
+    }
 
     $getUrlsSql = "SELECT * 
                    FROM links
@@ -378,8 +381,11 @@ $app->get('/urls', function ($request, $response, $args) {
 // Add new short URL to database
 $app->post('/url', function ($request, $response, $args) {
 
-    // Get user_id from jwt in authorization header
-    $userId = getUserIdFromToken($request, $this);
+    try {
+        $userId = getUserIdFromToken($request, $this);
+    } catch (Exception $e) {
+        return $this->response->withJson($e->getMessage(), 403);
+    }
 
     // Get request body
     $input = $request->getParsedBody();
@@ -486,8 +492,11 @@ $app->post('/url', function ($request, $response, $args) {
 // Change the visibility state to hidden
 $app->put('/url', function ($request, $response, $args) {
 
-    // Get user_id from jwt in authorization header
-    $userId = getUserIdFromToken($request, $this);
+    try {
+        $userId = getUserIdFromToken($request, $this);
+    } catch (Exception $e) {
+        return $this->response->withJson($e->getMessage(), 403);
+    }
 
     $input = $request->getParsedBody();
 
@@ -569,7 +578,7 @@ $app->post('/urlshortener/register', function ($request, $response, $args) {
 
     // Return error if email already exists in database
     if($stmt->fetchObject() != NULL) {
-        return $this->response->withJson(array("error" => "Email already exists"));
+        return $this->response->withJson(array("error" => "Email already exists"), 403);
     }
 
     // Hash user's password
@@ -637,13 +646,13 @@ $app->post('/urlshortener/login', function ($request, $response, $args) {
     }
     // Return error if email does not exist in database
     if($user == NULL) {
-        return $this->response->withJson(array("error" => "No user with the given email"));
+        return $this->response->withJson(array("error" => "No user with the given email"), 403);
     }
 
     // Check if hash of entered password matches hashed password in database
     if(!password_verify($requestArgs['password'], $user['password'])) {
         // If no, return invalid password error
-        return $this->response->withJson(array("error" => "Email/password combination is incorrect"));
+        return $this->response->withJson(array("error" => "Email/password combination is incorrect"), 403);
     }
 
     // Delete exisiting token(s) for user_id retrieved from SQL query
