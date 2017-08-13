@@ -69,6 +69,7 @@ function isUnusedCode($_this, $testCode) {
 
 // Add row to database with data about interaction
 function logInteraction($_this, $type, $code) {
+
     // Get user data
     $ip_address = $_SERVER['REMOTE_ADDR'];
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
@@ -106,6 +107,11 @@ function logInteraction($_this, $type, $code) {
 
 // Log information about the user and the page that was visited
 function logPageVisit($_this, $input) {
+
+    if($input['site'] === "localhost") {
+        return array('rows_affected' => 0);
+    }
+
     // Get values for setting browser and operating system
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     preg_match('#\((.*?)\)#', $user_agent, $match);
@@ -254,8 +260,77 @@ function generateToken($email, $_this) {
     return $jwt;
 }
 
-function isAuthenticated($jwt, $_this) {
+function isAuthenticated($_request, $_this) {
 
+    $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
+
+    // Throw exception when no authorization given
+    if(empty($jwt)) {
+        // No token given
+        return false;
+    }
+
+    // Get claims from JWT
+    try {
+        $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
+        $sub = $decoded->sub;
+        $iat = $decoded->iat;
+        $exp = $decoded->exp;
+        $jti = $decoded->jti;
+    } catch (Exception $e) {
+        // Malformed token or token not found
+        return false;
+    }
+
+    // Get database data about token
+    $getUser = "SELECT token_id, user_id, creation_date, expiration_date
+                FROM tokens
+                WHERE token = :token";
+
+    $stmt = $_this->db->prepare($getUser);
+    $stmt->bindParam("token", $jwt);
+
+    try {
+        $stmt->execute();
+        $object = $stmt->fetchObject();
+        $tokenId = $object->token_id;
+        $userId = $object->user_id;
+        $creationDate = $object->creation_date;
+        $expirationDate = $object->expiration_date;
+    } catch (Exception $e) {
+        echo json_encode($e);
+        return NULL;
+    }
+
+    // Check if database data matches jwt claims
+    if($sub !== $userId || $iat !== intval($creationDate) || $exp !== intval($expirationDate) || $jti !== $tokenId) {
+        // Invalid token
+        return false;
+    }
+
+    // Check if jwt is expired
+    if($exp < time()) {
+
+        // Remove expired token from database
+        $removeTokenSql = "DELETE FROM tokens
+                           WHERE token = :token";
+
+        $stmt = $_this->db->prepare($removeTokenSql);
+        $stmt->bindParam("token", $jwt);
+
+        try {
+            $stmt->execute();
+        } catch (Exception $e) {
+            echo json_encode($e);
+            return NULL;
+        }
+
+        // Token expired
+        return false;
+    }
+
+    // Return true (is authenticated)
+    return true;
 }
 
 
@@ -696,4 +771,15 @@ $app->post('/urlshortener/logout', function ($request, $response, $args) {
 
     return $this->response->withJson(array("rows_affected" => $stmt->rowCount()));
 
+});
+
+$app->post('/urlshortener/authenticate', function ($request, $response, $args) {
+    
+    try {
+        $isAuth = isAuthenticated($request, $this);
+    } catch (Exception $e) {
+        return $this->response->withJson($e->getMessage(), 403);
+    }
+
+    return $this->response->withJson($isAuth);
 });
