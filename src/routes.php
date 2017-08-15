@@ -161,21 +161,8 @@ function logPageVisit($_this, $input) {
 
 function generateToken($email, $_this) {
 
-    // Get token_id for next token to be inserted
-    $getNextTokenIdSql = "SHOW TABLE STATUS LIKE 'tokens'";
-
-    $stmt = $_this->db->prepare($getNextTokenIdSql);
-
-    try {
-        $stmt->execute();
-        $nextTokenId = $stmt->fetchObject()->Auto_increment;
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
-
     // Get user_id for sub of JWT
-    $getUserIdSql = "SELECT user_id
+    $getUserIdSql = "SELECT user_id, password
                      FROM users
                      WHERE email = :email";
 
@@ -184,7 +171,9 @@ function generateToken($email, $_this) {
     
     try {
         $stmt->execute();
-        $userId = $stmt->fetchObject()->user_id;
+        $object = $stmt->fetchObject();
+        $userId = $object->user_id;
+        $password = $object->password;
     } catch (Exception $e) {
         echo json_encode($e);
         return NULL;
@@ -196,16 +185,24 @@ function generateToken($email, $_this) {
         "typ" => "JWT"
     );
 
-    // Get IP address of current browsing session
+    // Get data about current browsing session
     $ipAddress = $_SERVER['REMOTE_ADDR'];
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    preg_match('#\((.*?)\)#', $user_agent, $match);
+    $start = strrpos($user_agent, ')') + 2;
+    $end = strrpos($user_agent, ' ');
+    $browser = substr($user_agent, $start, $end-$start);
+    $operating_system = $match[1];
 
     $payload = array(
         "iss" => $_SERVER['HTTP_ORIGIN'], // Domain name that issued the token i.e. https://kellenschmidt.com
         "iat" => time(),
         "exp" => time() + (3600 * 24 * 30), // Expiration time: 30 days
-        "jti" => $nextTokenId, // token_id of the token that is being created
         "sub" => $userId, // user_id of the user that the token is being created for
-        "ipa" => $ipAddress
+        "pwd" => $password,
+        "ipa" => $ipAddress,
+        "bwr" => $browser,
+        "os"  => $operating_system
     );
 
     $claims = array_merge($header, $payload);
@@ -213,44 +210,6 @@ function generateToken($email, $_this) {
     // Create JWT
     try {
         $jwt = JWT::encode($claims, getenv('JWT_SECRET'));
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
-
-    // Remove old JWTs from database
-    $removeOldTokensSql = "DELETE FROM tokens
-                           WHERE user_id = :user_id
-                           AND ip_address = :ip_address";
-
-    $stmt = $_this->db->prepare($removeOldTokensSql);
-    $stmt->bindParam("user_id", $payload['sub']);
-    $stmt->bindParam("ip_address", $ipAddress);
-
-    try {
-        $stmt->execute();
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
-
-    // Insert JWT into database
-    $insertTokenSql = "INSERT INTO tokens
-                       SET user_id = :user_id,
-                           token = :token,
-                           ip_address = :ip_address,
-                           creation_date = :creation_date,
-                           expiration_date = :expiration_date";
-
-    $stmt = $_this->db->prepare($insertTokenSql);
-    $stmt->bindParam("user_id", $payload['sub']);
-    $stmt->bindParam("token", $jwt);
-    $stmt->bindParam("ip_address", $ipAddress);
-    $stmt->bindParam("creation_date", $payload['iat']);
-    $stmt->bindParam("expiration_date", $payload['exp']);
-
-    try {
-        $stmt->execute();
     } catch (Exception $e) {
         echo json_encode($e);
         return NULL;
@@ -266,67 +225,51 @@ function isAuthenticated($_request, $_this) {
 
     // Throw exception when no authorization given
     if(empty($jwt)) {
-        // No token given
         return false;
     }
 
     // Get claims from JWT
     try {
         $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
+        $iss = $decoded->iss;
         $sub = $decoded->sub;
-        $iat = $decoded->iat;
+        $pwd = $decoded->pwd;
         $exp = $decoded->exp;
-        $jti = $decoded->jti;
+        $ipa = $decoded->ipa;
+        $bwr = $decoded->bwr;
+        $os  = $decoded->os;
     } catch (Exception $e) {
-        // Malformed token or token not found
-        return false;
+        throw new Exception("Malformed/invalid token");
     }
 
-    // Get database data about token
-    $getUser = "SELECT token_id, user_id, creation_date, expiration_date
-                FROM tokens
-                WHERE token = :token";
+    $getUserPasswordSql = "SELECT password
+                           FROM users
+                           WHERE user_id = :user_id";
 
-    $stmt = $_this->db->prepare($getUser);
-    $stmt->bindParam("token", $jwt);
+    $stmt = $_this->db->prepare($getUserPasswordSql);
+    $stmt->bindParam("user_id", $sub);
 
     try {
         $stmt->execute();
-        $object = $stmt->fetchObject();
-        $tokenId = $object->token_id;
-        $userId = $object->user_id;
-        $creationDate = $object->creation_date;
-        $expirationDate = $object->expiration_date;
+        $password = $stmt->fetchObject()->password;
     } catch (Exception $e) {
         echo json_encode($e);
         return NULL;
     }
 
+    // Get data about current browsing session
+    $domain = $_SERVER['HTTP_ORIGIN'];
+    $ipAddress = $_SERVER['REMOTE_ADDR'];
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    preg_match('#\((.*?)\)#', $user_agent, $match);
+    $start = strrpos($user_agent, ')') + 2;
+    $end = strrpos($user_agent, ' ');
+    $browser = substr($user_agent, $start, $end-$start);
+    $operating_system = $match[1];
+
     // Check if database data matches jwt claims
-    if($sub !== $userId || $iat !== intval($creationDate) || $exp !== intval($expirationDate) || $jti !== $tokenId) {
-        // Invalid token
-        return false;
-    }
-
-    // Check if jwt is expired
-    if($exp < time()) {
-
-        // Remove expired token from database
-        $removeTokenSql = "DELETE FROM tokens
-                           WHERE token = :token";
-
-        $stmt = $_this->db->prepare($removeTokenSql);
-        $stmt->bindParam("token", $jwt);
-
-        try {
-            $stmt->execute();
-        } catch (Exception $e) {
-            echo json_encode($e);
-            return NULL;
-        }
-
-        // Token expired
-        return false;
+    if($iss != $domain || $ipa != $ipAddress || $bwr != $browser || $os != $operating_system || $pwd != $password || $exp < time()) {
+        throw new Exception("Invalid/expired token");
     }
 
     // Return true (is authenticated)
@@ -334,8 +277,8 @@ function isAuthenticated($_request, $_this) {
 }
 
 
-// Use token to get user_id from tokens table
-function getUserIdFromToken($_request, $_this) {
+// Get user_id from token claim given token is already authenticated
+function getUserIdFromToken($_request) {
 
     $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
 
@@ -343,25 +286,13 @@ function getUserIdFromToken($_request, $_this) {
     if(empty($jwt)) {
         return -1;
     }
-    
-    $getUser = "SELECT user_id
-                FROM tokens
-                WHERE token = :token";
-    
-    $stmt = $_this->db->prepare($getUser);
-    $stmt->bindParam("token", $jwt);
-    
-    try {
-        $stmt->execute();
-        $userId = $stmt->fetchObject()->user_id;
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
 
-    // Return error if token could not be found
-    if(empty($userId)) {
-        throw new Exception("Token not found");
+    // Get user_id from sub (subject) claim of JWT
+    try {
+        $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
+        $userId = $decoded->sub;
+    } catch (Exception $e) {
+        throw new Exception("Malformed/invalid token");
     }
 
     return $userId;
@@ -401,11 +332,11 @@ $app->post('/page-visit', function ($request, $response, $args) {
 // Get content to put in modal
 $app->get('/modal/[{name}]', function ($request, $response, $args) {
 
-    $get_modal_sql = "SELECT * 
-                      FROM modal_content
-                      WHERE name = :name";
+    $getModalSql = "SELECT * 
+                    FROM modal_content
+                    WHERE name = :name";
 
-    $stmt = $this->db->prepare($get_modal_sql);
+    $stmt = $this->db->prepare($getModalSql);
     $stmt->bindParam("name", $args['name']);
 
     try {
@@ -422,11 +353,11 @@ $app->get('/modal/[{name}]', function ($request, $response, $args) {
 // Return all visible URLs
 $app->get('/urls', function ($request, $response, $args) {
 
-    // Get user_id from jwt in authorization header
     try {
-        $userId = getUserIdFromToken($request, $this);
+        $isAuth = isAuthenticated($request, $this);
+        $userId = getUserIdFromToken($request);
     } catch (Exception $e) {
-        return $this->response->withJson($e->getMessage(), 403);
+        return $this->response->withJson(array("error" => $e->getMessage()), 403);
     }
 
     $getUrlsSql = "SELECT * 
@@ -457,9 +388,10 @@ $app->get('/urls', function ($request, $response, $args) {
 $app->post('/url', function ($request, $response, $args) {
 
     try {
-        $userId = getUserIdFromToken($request, $this);
+        $isAuth = isAuthenticated($request, $this);
+        $userId = getUserIdFromToken($request);
     } catch (Exception $e) {
-        return $this->response->withJson($e->getMessage(), 403);
+        return $this->response->withJson(array("error" => $e->getMessage()), 403);
     }
 
     // Get request body
@@ -568,9 +500,10 @@ $app->post('/url', function ($request, $response, $args) {
 $app->put('/url', function ($request, $response, $args) {
 
     try {
-        $userId = getUserIdFromToken($request, $this);
+        $isAuth = isAuthenticated($request, $this);
+        $userId = getUserIdFromToken($request);
     } catch (Exception $e) {
-        return $this->response->withJson($e->getMessage(), 403);
+        return $this->response->withJson(array("error" => $e->getMessage()), 403);
     }
 
     $input = $request->getParsedBody();
@@ -730,21 +663,6 @@ $app->post('/urlshortener/login', function ($request, $response, $args) {
         return $this->response->withJson(array("error" => "Email/password combination is incorrect"), 403);
     }
 
-    // Delete exisiting token(s) for user_id retrieved from SQL query
-    $deleteOldTokensSql = "DELETE FROM tokens
-                           WHERE user_id = :user_id
-                           AND ip_address = :ip_address";
-
-    $stmt = $this->db->prepare($deleteOldTokensSql);
-    $stmt->bindParam("user_id", $user['user_id']);
-    $stmt->bindParam("ip_address", $_SERVER['REMOTE_ADDR']);
-    
-    try {
-        $stmt->execute();
-    } catch (Exception $e) {
-        return $this->response->withJson($e);
-    }
-
     // Generate new token
     $token = generateToken($requestArgs['email'], $this);
     
@@ -753,33 +671,13 @@ $app->post('/urlshortener/login', function ($request, $response, $args) {
 
 });
 
-$app->post('/urlshortener/logout', function ($request, $response, $args) {
-    
-    $token = $request->getHeaders()['HTTP_AUTHORIZATION'][0];
-    
-    $deleteToken = "DELETE FROM tokens
-                    WHERE token = :token";
-    
-    $stmt = $this->db->prepare($deleteToken);
-    $stmt->bindParam("token", $token);
-    
-    try {
-        $stmt->execute();
-    } catch (Exception $e) {
-        return $this->response->withJson($e);
-    }
-
-    return $this->response->withJson(array("rows_affected" => $stmt->rowCount()));
-
-});
-
 $app->post('/urlshortener/authenticate', function ($request, $response, $args) {
     
     try {
         $isAuth = isAuthenticated($request, $this);
     } catch (Exception $e) {
-        return $this->response->withJson($e->getMessage(), 403);
+        return $this->response->withJson(array("error" => $e->getMessage()), 403);
     }
 
-    return $this->response->withJson($isAuth);
+    return $this->response->withJson(array("authenticated" => $isAuth));
 });
