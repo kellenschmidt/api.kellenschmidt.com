@@ -1,0 +1,34 @@
+{
+    "name": "Kellen's API",
+    "description": "RESTful API enabling database integration with the kellenschmidt.com suite of websites and applications",
+    "keywords": ["microframework", "rest", "router", "psr7"],
+    "homepage": "http://github.com/slimphp/Slim-Skeleton",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Kellen Schmidt",
+            "email": "kellen@kellenschmidt.com",
+            "homepage": "https://kellenschmidt.com/"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.0",
+        "slim/slim": "^3.1",
+        "slim/php-view": "^2.0",
+        "monolog/monolog": "^1.17",
+        "firebase/php-jwt": "^5.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": ">=4.8 < 6.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+	"scripts": {
+        "start": "php -S 0.0.0.0:8080 -t public public/index.php",
+        "test": "phpunit"
+	}
+
+}
