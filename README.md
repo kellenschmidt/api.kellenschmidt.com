@@ -7,7 +7,7 @@ RESTful API enabling database integration with the kellenschmidt.com suite of we
 
 Accessed at [api.kellenschmidt.com](api.kellenschmidt.com)
 
-Documentation at [docs.urlshortener4.apiary.io](http://docs.urlshortener4.apiary.io)
+Documentation at [docs.kellensurlshortener.apiary.io](http://docs.kellensurlshortener.apiary.io)
 
 ## Tools Used
 [Slim Framework](https://www.slimframework.com/) for the API to interact with the database
@@ -27,11 +27,12 @@ https://kellenschmidt.com
 
 ### URL Shortener in Angular 2
 Access database to preform these actions:
-- Create short links from long URLs
-- Get data about all links
-- Get data to redirect short links to long links
-- Count how many times a link has been clicked
-- Remove short URL from list of URLs
+- Get, create, update and hide short links
+- Get data to redirect short links
+- Count clicks on short links
+- Register and log in users
+- Authenticate http requests
 - Track data about all interactions
+- Log information about page visitors
 
 https://urlshortener.kellenschmidt.com
