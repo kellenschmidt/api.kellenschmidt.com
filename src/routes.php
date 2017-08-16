@@ -586,7 +586,7 @@ $app->post('/urlshortener/register', function ($request, $response, $args) {
 
     // Return error if email already exists in database
     if($stmt->fetchObject() != NULL) {
-        return $this->response->withJson(array("error" => "Email already exists"), 403);
+        return $this->response->withJson(array("element" => "email", "error" => "emailAlreadyExists"), 403);
     }
 
     // Hash user's password
@@ -654,13 +654,13 @@ $app->post('/urlshortener/login', function ($request, $response, $args) {
     }
     // Return error if email does not exist in database
     if($user == NULL) {
-        return $this->response->withJson(array("error" => "No user with the given email"), 403);
+        return $this->response->withJson(array("element" => "email", "error" => "noUserGivenEmail"), 403);
     }
 
     // Check if hash of entered password matches hashed password in database
     if(!password_verify($requestArgs['password'], $user['password'])) {
         // If no, return invalid password error
-        return $this->response->withJson(array("error" => "Email/password combination is incorrect"), 403);
+        return $this->response->withJson(array("element" => "password", "error" => "wrongPassword"), 403);
     }
 
     // Generate new token
