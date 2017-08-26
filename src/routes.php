@@ -315,7 +315,7 @@ $app->get('/', function ($request, $response, $args) {
 });
 
 // Log information whenever a home page is visited
-$app->get('/test', function ($request, $response, $args) {
+$app->get('/status', function ($request, $response, $args) {
     
     return $this->response->withJson(array("Does it work?" => true));
 });
@@ -349,6 +349,33 @@ $app->get('/modal/[{name}]', function ($request, $response, $args) {
     return $this->response->withJson($modal);
 
 });
+
+// Get content to put in modal
+$app->get('/cards/[{type}]', function ($request, $response, $args) {
+    
+        $getCardsSql = "SELECT *
+                        FROM card_content
+                        WHERE card_type = :card_type
+                        AND visible = 1
+                        ORDER BY card_id ASC";
+    
+        $stmt = $this->db->prepare($getCardsSql);
+        $stmt->bindParam("card_type", $args['type']);
+    
+        try {
+            $stmt->execute();
+            $cards = $stmt->fetchAll();
+        } catch (Exception $e) {
+            return $this->response->withJson($e);
+        }
+
+        $return = array(
+            "data" => $cards
+        );
+    
+        return $this->response->withJson($return);
+    
+    });
 
 // Return all visible URLs
 $app->get('/urls', function ($request, $response, $args) {
