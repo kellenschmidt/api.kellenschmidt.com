@@ -350,32 +350,57 @@ $app->get('/modal/[{name}]', function ($request, $response, $args) {
 
 });
 
-// Get content to put in modal
+// Get content for project or work experience cards
 $app->get('/cards/[{type}]', function ($request, $response, $args) {
     
-        $getCardsSql = "SELECT *
-                        FROM card_content
-                        WHERE card_type = :card_type
-                        AND visible = 1
-                        ORDER BY card_id ASC";
-    
-        $stmt = $this->db->prepare($getCardsSql);
-        $stmt->bindParam("card_type", $args['type']);
-    
-        try {
-            $stmt->execute();
-            $cards = $stmt->fetchAll();
-        } catch (Exception $e) {
-            return $this->response->withJson($e);
-        }
+    $getCardsSql = "SELECT *
+                    FROM card_content
+                    WHERE card_type = :card_type
+                    AND visible = 1
+                    ORDER BY card_id ASC";
 
-        $return = array(
-            "data" => $cards
-        );
+    $stmt = $this->db->prepare($getCardsSql);
+    $stmt->bindParam("card_type", $args['type']);
+
+    try {
+        $stmt->execute();
+        $cards = $stmt->fetchAll();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    $return = array(
+        "data" => $cards
+    );
+
+    return $this->response->withJson($return);
+
+});
+
+// Get content for skills chips and category headings
+$app->get('/chips', function ($request, $response, $args) {
     
-        return $this->response->withJson($return);
-    
-    });
+    $getChipsSql = "SELECT *
+                    FROM chip_content
+                    WHERE visible = 1
+                    ORDER BY chip_id ASC";
+
+    $stmt = $this->db->prepare($getChipsSql);
+
+    try {
+        $stmt->execute();
+        $cards = $stmt->fetchAll();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    $return = array(
+        "data" => $cards
+    );
+
+    return $this->response->withJson($return);
+
+});
 
 // Return all visible URLs
 $app->get('/urls', function ($request, $response, $args) {
