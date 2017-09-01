@@ -451,7 +451,8 @@ $app->post('/url', function ($request, $response, $args) {
     $longUrl = $input['long_url'];
 
     // Prepend long url with http:// if it doesn't have it already
-    if(substr($longUrl, 0, 4) != 'http') {
+    $prefix = substr($longUrl, 0, 4);
+    if($prefix != 'http' && $prefix != 'file') {
         $longUrl = 'http://' . $longUrl;
     }
 
