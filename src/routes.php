@@ -159,6 +159,7 @@ function logPageVisit($_this, $input) {
     return array('rows_affected' => $stmt->rowCount());
 }
 
+// Generate a JWT using info about the current user and session
 function generateToken($email, $_this) {
 
     // Get user_id for sub of JWT
@@ -219,6 +220,7 @@ function generateToken($email, $_this) {
     return $jwt;
 }
 
+// Test whether JWT from http header is valid
 function isAuthenticated($_request, $_this) {
 
     $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
@@ -267,7 +269,7 @@ function isAuthenticated($_request, $_this) {
     $browser = substr($user_agent, $start, $end-$start);
     $operating_system = $match[1];
 
-    // Check if database data matches jwt claims
+    // Check if jwt claims match current user's session
     if($iss != $domain || $ipa != $ipAddress || $bwr != $browser || $os != $operating_system || $pwd != $password || $exp < time()) {
         throw new Exception("Invalid/expired token");
     }
@@ -314,7 +316,7 @@ $app->get('/', function ($request, $response, $args) {
     
 });
 
-// Log information whenever a home page is visited
+// Return true if the API is not broken
 $app->get('/status', function ($request, $response, $args) {
     
     return $this->response->withJson(array("Does it work?" => true));
@@ -620,6 +622,7 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
 
 });
 
+// Create a new user in the database and return the new user and a jwt
 $app->post('/urlshortener/register', function ($request, $response, $args) {
     
     $requestArgs = $request->getParsedBody();
@@ -687,6 +690,7 @@ $app->post('/urlshortener/register', function ($request, $response, $args) {
     
 });
 
+// Test the user's login credentials and return a jwt if valid
 $app->post('/urlshortener/login', function ($request, $response, $args) {
     
     $requestArgs = $request->getParsedBody();
@@ -724,6 +728,7 @@ $app->post('/urlshortener/login', function ($request, $response, $args) {
 
 });
 
+// Test whether the current jwt of the user's session is valid
 $app->post('/urlshortener/authenticate', function ($request, $response, $args) {
     
     try {
@@ -733,4 +738,28 @@ $app->post('/urlshortener/authenticate', function ($request, $response, $args) {
     }
 
     return $this->response->withJson(array("authenticated" => $isAuth));
+
+});
+
+// For use with CSE 5323 Lab 1. Returns image URLs from database
+$app->get('/mslc-urls', function ($request, $response, $args) {
+    
+    $getMSLCUrlsSql = "SELECT url
+                       FROM mslc_urls";
+
+    $stmt = $this->db->prepare($getMSLCUrlsSql);
+
+    try {
+        $stmt->execute();
+        $MSLCUrls = $stmt->fetchAll();
+    } catch (Exception $e) {
+        return $this->response->withJson($e);
+    }
+
+    $return = array(
+        "data" => $MSLCUrls
+    );
+
+    return $this->response->withJson($return);
+
 });
