@@ -1,7 +1,4 @@
 # api.kellenschmidt.com
-[![Build Status](https://travis-ci.org/kellenschmidt/api.kellenschmidt.com.svg?branch=master)](https://travis-ci.org/kellenschmidt/api.kellenschmidt.com)
-[![Stories in Ready](https://badge.waffle.io/kellenschmidt/api.kellenschmidt.com.svg?label=ready&title=Ready)](http://waffle.io/kellenschmidt/api.kellenschmidt.com)
-[![Stories in Progress](https://badge.waffle.io/kellenschmidt/api.kellenschmidt.com.svg?label=In%20Progress&title=In%20Progress)](http://waffle.io/kellenschmidt/api.kellenschmidt.com)
 
 RESTful API enabling database integration with the kellenschmidt.com suite of websites and applications.
 
@@ -12,7 +9,7 @@ Documentation at [docs.kellensurlshortener.apiary.io](http://docs.kellensurlshor
 ## Tools Used
 [Slim Framework](https://www.slimframework.com/) for the API to interact with the database
 
-[Apiary](https://piary.io/) to document the API
+[Apiary](https://apiary.io/) to document the API
 
 [MySQL](https://mysql.com) database to store the data
 
@@ -20,12 +17,16 @@ Documentation at [docs.kellensurlshortener.apiary.io](http://docs.kellensurlshor
 
 ### Portfolio Website
 Accesses database to:
-- Expose content for modals
+- Expose content for
+    - Projects cards and modals
+    - Work experience cards and modals
+    - Skills chips
+    - Courses carousel
 - Log information about page visitors
 
 https://kellenschmidt.com
 
-### URL Shortener in Angular 2
+### URL Shortener in Angular
 Access database to preform these actions:
 - Get, create, update and hide short links
 - Get data to redirect short links
@@ -35,4 +36,4 @@ Access database to preform these actions:
 - Track data about all interactions
 - Log information about page visitors
 
-https://urlshortener.kellenschmidt.com
+https://kellenschmidt.com/url
