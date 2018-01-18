@@ -2,9 +2,9 @@
 
 RESTful API enabling database integration with the kellenschmidt.com suite of websites and applications.
 
-Accessed at [api.kellenschmidt.com](api.kellenschmidt.com)
+Accessed at [api.kellenschmidt.com](https://api.kellenschmidt.com)
 
-Documentation at [docs.kellensurlshortener.apiary.io](http://docs.kellensurlshortener.apiary.io)
+Documentation at [kspw.docs.apiary.io/](https://kspw.docs.apiary.io/)
 
 ## Tools Used
 [Slim Framework](https://www.slimframework.com/) for the API to interact with the database
