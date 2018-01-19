@@ -15,7 +15,7 @@ Documentation at [kspw.docs.apiary.io/](https://kspw.docs.apiary.io/)
 
 ## Usage
 
-### Portfolio Website
+### Interactive Resume Portfolio Website
 Accesses database to:
 - Expose content for
     - Projects cards and modals
@@ -37,3 +37,17 @@ Access database to preform these actions:
 - Log information about page visitors
 
 https://kellenschmidt.com/url
+
+## Local development
+
+Must have MySQL database running. Verify database connection settings in `/src/settings.php` before running.
+
+```
+git clone https://github.com/kellenschmidt/api.kellenschmidt.com.git
+cd api.kellenschmidt.com
+sh install_composer.sh
+php composer.phar install
+php composer.phar start
+```
+
+Visit `localhost:8080`
