@@ -16,12 +16,12 @@ return [
             'level' => \Monolog\Logger::DEBUG,
         ],
 
-	// Database connection settings
+        // Database connection settings
         "db" => [
-            "host" => "localhost",
-            "dbname" => "url_shortener",
+            "host" => "kspw-db",
+            "dbname" => "personal_website",
             "user" => "root",
-            "pass" => getenv('MYSQL_PASS')
+            "pass" => "pass"
         ],
     ],
 ];
