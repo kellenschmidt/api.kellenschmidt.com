@@ -4,8 +4,59 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "2b416256c51ad2e9415ef6c8bc5948ff",
+    "content-hash": "12e27c71d9ca4f94b9661cd395be95e1",
     "packages": [
+        {
+            "name": "bairwell/middleware-cors",
+            "version": "v0.3.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bairwell/middleware-cors.git",
+                "reference": "545496ebb1616db1dc09c3245df40d9eb66e0337"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bairwell/middleware-cors/zipball/545496ebb1616db1dc09c3245df40d9eb66e0337",
+                "reference": "545496ebb1616db1dc09c3245df40d9eb66e0337",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.0",
+                "psr/http-message": "^1.0",
+                "psr/log": "~1.0"
+            },
+            "require-dev": {
+                "monolog/monolog": "^1.13",
+                "phpunit/phpunit": "^5.1",
+                "squizlabs/php_codesniffer": "^2.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Bairwell\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Richard Bairwell",
+                    "email": "richard@bairwell.com",
+                    "homepage": "http://www.bairwell.com"
+                }
+            ],
+            "description": "A PSR-7 middleware layer for providing CORS (Cross Origin Request Security) headers and security provisions. Instead of just allowing invalid CORs requests to come through, this middleware actively blocks them after validating.",
+            "homepage": "https://github.com/bairwell/middleware-cors",
+            "keywords": [
+                "cors",
+                "cross origin request security",
+                "middleware",
+                "psr-7"
+            ],
+            "time": "2016-06-02T17:38:08+00:00"
+        },
         {
             "name": "container-interop/container-interop",
             "version": "1.2.0",

@@ -7,19 +7,19 @@ use \Firebase\JWT\JWT;
 *************************************/
 
 // Set header to allow CORS for cross-domain requests
-$http_origin = $_SERVER['HTTP_ORIGIN'];
-$regex = "/^(https?:\/\/(?:.+\.)?kellenschmidt\.com(?::\d{1,5})?)$/";
+// $http_origin = $_SERVER['HTTP_ORIGIN'];
+// $regex = "/^(https?:\/\/(?:.+\.)?kellenschmidt\.com(?::\d{1,5})?)$/";
 
-if(preg_match($regex, $http_origin)) {
-    header("Access-Control-Allow-Origin: $http_origin");
-} else if($_SERVER['HTTP_ORIGIN'] == 'http://localhost:4200') {
-    header("Access-Control-Allow-Origin: http://localhost:4200");
-} else {
-    header("Access-Control-Allow-Origin: null");
-}
+// if(preg_match($regex, $http_origin)) {
+//     header("Access-Control-Allow-Origin: $http_origin");
+// } else if($_SERVER['HTTP_ORIGIN'] == 'http://localhost:4200') {
+//     header("Access-Control-Allow-Origin: http://localhost:4200");
+// } else {
+//     header("Access-Control-Allow-Origin: null");
+// }
 
-header('Access-Control-Allow-Methods: GET,PUT,POST,DELETE,PATCH,OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+// header('Access-Control-Allow-Methods: GET,PUT,POST,DELETE,PATCH,OPTIONS');
+// header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 /*************************************
                 Functions
