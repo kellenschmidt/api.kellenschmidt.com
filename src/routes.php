@@ -1,6 +1,6 @@
 <?php
 
-use \Firebase\JWT\JWT;
+// use \Firebase\JWT\JWT;
 
 /*************************************
                 Headers
@@ -25,302 +25,302 @@ use \Firebase\JWT\JWT;
                 Functions
 *************************************/
 
-/* Generate a random string, using a cryptographically secure 
- * pseudorandom number generator (random_int)
- *
- * @param int $length      How many characters do we want?
- * @param string $keyspace A string of all possible characters
- *                         to select from
- * @return string
- */
-function random_str($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_') {
-    $str = '';
-    $max = mb_strlen($keyspace, '8bit') - 1;
-    for ($i = 0; $i < $length; ++$i) {
-        $str .= $keyspace[random_int(0, $max)];
-    }
-    return $str;
-}
+// /* Generate a random string, using a cryptographically secure 
+//  * pseudorandom number generator (random_int)
+//  *
+//  * @param int $length      How many characters do we want?
+//  * @param string $keyspace A string of all possible characters
+//  *                         to select from
+//  * @return string
+//  */
+// function random_str($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_') {
+//     $str = '';
+//     $max = mb_strlen($keyspace, '8bit') - 1;
+//     for ($i = 0; $i < $length; ++$i) {
+//         $str .= $keyspace[random_int(0, $max)];
+//     }
+//     return $str;
+// }
 
-// Test whether URL code is already in use or not
-function isUnusedCode($_this, $testCode) {
-    // Create and execute query to get all codes in database
-    $get_all_codes_query = "SELECT * 
-                            FROM links
-                            WHERE code = BINARY :code";
+// // Test whether URL code is already in use or not
+// function isUnusedCode($_this, $testCode) {
+//     // Create and execute query to get all codes in database
+//     $get_all_codes_query = "SELECT * 
+//                             FROM links
+//                             WHERE code = BINARY :code";
 
-    $stmt = $_this->db->prepare($get_all_codes_query);
-    $stmt->bindParam("code", $testCode);
+//     $stmt = $_this->db->prepare($get_all_codes_query);
+//     $stmt->bindParam("code", $testCode);
 
-    try {
-        $stmt->execute();
-        $code = $stmt->fetchObject();
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
+//     try {
+//         $stmt->execute();
+//         $code = $stmt->fetchObject();
+//     } catch (Exception $e) {
+//         echo json_encode($e);
+//         return NULL;
+//     }
 
-    if($code == NULL) {
-        return true;
-    } else {
-        return false;
-    }
-}
+//     if($code == NULL) {
+//         return true;
+//     } else {
+//         return false;
+//     }
+// }
 
-// Add row to database with data about interaction
-function logInteraction($_this, $type, $code) {
+// // Add row to database with data about interaction
+// function logInteraction($_this, $type, $code) {
 
-    // Get user data
-    $ip_address = $_SERVER['REMOTE_ADDR'];
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    preg_match('#\((.*?)\)#', $user_agent, $match);
-    $start = strrpos($user_agent, ')') + 2;
-    $end = strrpos($user_agent, ' ');
-    $browser = substr($user_agent, $start, $end-$start);
-    $operating_system = $match[1];
+//     // Get user data
+//     $ip_address = $_SERVER['REMOTE_ADDR'];
+//     $user_agent = $_SERVER['HTTP_USER_AGENT'];
+//     preg_match('#\((.*?)\)#', $user_agent, $match);
+//     $start = strrpos($user_agent, ')') + 2;
+//     $end = strrpos($user_agent, ' ');
+//     $browser = substr($user_agent, $start, $end-$start);
+//     $operating_system = $match[1];
 
-    $add_interaction_sql = "INSERT INTO interactions
-                            SET interaction_type = :interaction_type,
-                                code = :code,
-                                ip_address = :ip_address,
-                                browser = :browser,
-                                operating_system = :operating_system,
-                                interaction_date = :interaction_date";
+//     $add_interaction_sql = "INSERT INTO interactions
+//                             SET interaction_type = :interaction_type,
+//                                 code = :code,
+//                                 ip_address = :ip_address,
+//                                 browser = :browser,
+//                                 operating_system = :operating_system,
+//                                 interaction_date = :interaction_date";
     
-    $stmt = $_this->db->prepare($add_interaction_sql);
-    $stmt->bindParam("interaction_type", $type);
-    $stmt->bindParam("code", $code);
-    $stmt->bindParam("ip_address", $ip_address);
-    $stmt->bindParam("browser", $browser);
-    $stmt->bindParam("operating_system", $operating_system);
-    $currentDateTime = date('Y/m/d H:i:s');
-    $stmt->bindParam("interaction_date", $currentDateTime);
+//     $stmt = $_this->db->prepare($add_interaction_sql);
+//     $stmt->bindParam("interaction_type", $type);
+//     $stmt->bindParam("code", $code);
+//     $stmt->bindParam("ip_address", $ip_address);
+//     $stmt->bindParam("browser", $browser);
+//     $stmt->bindParam("operating_system", $operating_system);
+//     $currentDateTime = date('Y/m/d H:i:s');
+//     $stmt->bindParam("interaction_date", $currentDateTime);
 
-    try {
-        $stmt->execute();
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
+//     try {
+//         $stmt->execute();
+//     } catch (Exception $e) {
+//         echo json_encode($e);
+//         return NULL;
+//     }
     
-}
+// }
 
-// Log information about the user and the page that was visited
-function logPageVisit($_this, $input) {
+// // Log information about the user and the page that was visited
+// function logPageVisit($_this, $input) {
 
-    if($input['site'] === "localhost") {
-        return array('rows_affected' => 0);
-    }
+//     if($input['site'] === "localhost") {
+//         return array('rows_affected' => 0);
+//     }
 
-    // Get values for setting browser and operating system
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    preg_match('#\((.*?)\)#', $user_agent, $match);
-    $start = strrpos($user_agent, ')') + 2;
-    $end = strrpos($user_agent, ' ');
+//     // Get values for setting browser and operating system
+//     $user_agent = $_SERVER['HTTP_USER_AGENT'];
+//     preg_match('#\((.*?)\)#', $user_agent, $match);
+//     $start = strrpos($user_agent, ')') + 2;
+//     $end = strrpos($user_agent, ' ');
 
-    // If document.referrer exists
-    if(isset($input['referrer'])) {
-        $referrer = $input['referrer'];
-    } else if(isset($_SERVER['HTTP_REFERER'])) {
-        $referrer = $_SERVER['HTTP_REFERER'];
-    } else {
-        $referrer = "";
-    }
+//     // If document.referrer exists
+//     if(isset($input['referrer'])) {
+//         $referrer = $input['referrer'];
+//     } else if(isset($_SERVER['HTTP_REFERER'])) {
+//         $referrer = $_SERVER['HTTP_REFERER'];
+//     } else {
+//         $referrer = "";
+//     }
 
-    // If referrer and site are the same set referrer to blank
-    if($input['site'] == substr($referrer, 8, -1)) {
-        $referrer = "";
-    }
+//     // If referrer and site are the same set referrer to blank
+//     if($input['site'] == substr($referrer, 8, -1)) {
+//         $referrer = "";
+//     }
     
-    $log_visit_sql = "INSERT INTO page_visits
-                      SET site = :site,
-                          ip_address = :ip_address,
-                          browser = :browser,
-                          operating_system = :operating_system,
-                          referrer = :referrer,
-                          page_visit_datetime = :page_visit_datetime";
+//     $log_visit_sql = "INSERT INTO page_visits
+//                       SET site = :site,
+//                           ip_address = :ip_address,
+//                           browser = :browser,
+//                           operating_system = :operating_system,
+//                           referrer = :referrer,
+//                           page_visit_datetime = :page_visit_datetime";
 
-    $stmt = $_this->db->prepare($log_visit_sql);
-    $stmt->bindParam("site", $input['site']);
-    $stmt->bindParam("ip_address", $_SERVER['REMOTE_ADDR']);
-    $stmt->bindParam("browser", substr($user_agent, $start, $end-$start));
-    $stmt->bindParam("operating_system", $match[1]);
-    $stmt->bindParam("referrer", $referrer);
-    $currentDateTime = date('Y/m/d H:i:s');
-    $stmt->bindParam("page_visit_datetime", $currentDateTime);
+//     $stmt = $_this->db->prepare($log_visit_sql);
+//     $stmt->bindParam("site", $input['site']);
+//     $stmt->bindParam("ip_address", $_SERVER['REMOTE_ADDR']);
+//     $stmt->bindParam("browser", substr($user_agent, $start, $end-$start));
+//     $stmt->bindParam("operating_system", $match[1]);
+//     $stmt->bindParam("referrer", $referrer);
+//     $currentDateTime = date('Y/m/d H:i:s');
+//     $stmt->bindParam("page_visit_datetime", $currentDateTime);
 
-    try {
-        $stmt->execute();
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
+//     try {
+//         $stmt->execute();
+//     } catch (Exception $e) {
+//         echo json_encode($e);
+//         return NULL;
+//     }
 
-    return array('rows_affected' => $stmt->rowCount());
-}
+//     return array('rows_affected' => $stmt->rowCount());
+// }
 
-// Generate a JWT using info about the current user and session
-function generateToken($email, $_this) {
+// // Generate a JWT using info about the current user and session
+// function generateToken($email, $_this) {
 
-    // Get user_id for sub of JWT
-    $getUserIdSql = "SELECT user_id, password
-                     FROM users
-                     WHERE email = :email";
+//     // Get user_id for sub of JWT
+//     $getUserIdSql = "SELECT user_id, password
+//                      FROM users
+//                      WHERE email = :email";
 
-    $stmt = $_this->db->prepare($getUserIdSql);
-    $stmt->bindParam("email", $email);
+//     $stmt = $_this->db->prepare($getUserIdSql);
+//     $stmt->bindParam("email", $email);
     
-    try {
-        $stmt->execute();
-        $object = $stmt->fetchObject();
-        $userId = $object->user_id;
-        $password = $object->password;
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
+//     try {
+//         $stmt->execute();
+//         $object = $stmt->fetchObject();
+//         $userId = $object->user_id;
+//         $password = $object->password;
+//     } catch (Exception $e) {
+//         echo json_encode($e);
+//         return NULL;
+//     }
 
-    // Create JWT claims
-    $header = array(
-        "alg" => "HS256",
-        "typ" => "JWT"
-    );
+//     // Create JWT claims
+//     $header = array(
+//         "alg" => "HS256",
+//         "typ" => "JWT"
+//     );
 
-    // Get data about current browsing session
-    $ipAddress = $_SERVER['REMOTE_ADDR'];
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    preg_match('#\((.*?)\)#', $user_agent, $match);
-    $start = strrpos($user_agent, ')') + 2;
-    $end = strrpos($user_agent, ' ');
-    $browser = substr($user_agent, $start, $end-$start);
-    $operating_system = $match[1];
+//     // Get data about current browsing session
+//     $ipAddress = $_SERVER['REMOTE_ADDR'];
+//     $user_agent = $_SERVER['HTTP_USER_AGENT'];
+//     preg_match('#\((.*?)\)#', $user_agent, $match);
+//     $start = strrpos($user_agent, ')') + 2;
+//     $end = strrpos($user_agent, ' ');
+//     $browser = substr($user_agent, $start, $end-$start);
+//     $operating_system = $match[1];
 
-    $payload = array(
-        "iss" => $_SERVER['HTTP_ORIGIN'], // Domain name that issued the token i.e. https://kellenschmidt.com
-        "iat" => time(),
-        "exp" => time() + (3600 * 24 * 30), // Expiration time: 30 days
-        "sub" => $userId, // user_id of the user that the token is being created for
-        "pwd" => $password,
-        "ipa" => $ipAddress,
-        "bwr" => $browser,
-        "os"  => $operating_system
-    );
+//     $payload = array(
+//         "iss" => $_SERVER['HTTP_ORIGIN'], // Domain name that issued the token i.e. https://kellenschmidt.com
+//         "iat" => time(),
+//         "exp" => time() + (3600 * 24 * 30), // Expiration time: 30 days
+//         "sub" => $userId, // user_id of the user that the token is being created for
+//         "pwd" => $password,
+//         "ipa" => $ipAddress,
+//         "bwr" => $browser,
+//         "os"  => $operating_system
+//     );
 
-    $claims = array_merge($header, $payload);
+//     $claims = array_merge($header, $payload);
 
-    // Create JWT
-    try {
-        $jwt = JWT::encode($claims, getenv('JWT_SECRET'));
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
+//     // Create JWT
+//     try {
+//         $jwt = JWT::encode($claims, getenv('JWT_SECRET'));
+//     } catch (Exception $e) {
+//         echo json_encode($e);
+//         return NULL;
+//     }
 
-    // Return JWT
-    return $jwt;
-}
+//     // Return JWT
+//     return $jwt;
+// }
 
-// Test whether JWT from http header is valid
-function isAuthenticated($_request, $_this) {
+// // Test whether JWT from http header is valid
+// function isAuthenticated($_request, $_this) {
 
-    $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
+//     $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
 
-    // Throw exception when no authorization given
-    if(empty($jwt)) {
-        return false;
-    }
+//     // Throw exception when no authorization given
+//     if(empty($jwt)) {
+//         return false;
+//     }
 
-    // Get claims from JWT
-    try {
-        $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
-        $iss = $decoded->iss;
-        $sub = $decoded->sub;
-        $pwd = $decoded->pwd;
-        $exp = $decoded->exp;
-        $ipa = $decoded->ipa;
-        $bwr = $decoded->bwr;
-        $os  = $decoded->os;
-    } catch (Exception $e) {
-        throw new Exception("Malformed/invalid token");
-    }
+//     // Get claims from JWT
+//     try {
+//         $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
+//         $iss = $decoded->iss;
+//         $sub = $decoded->sub;
+//         $pwd = $decoded->pwd;
+//         $exp = $decoded->exp;
+//         $ipa = $decoded->ipa;
+//         $bwr = $decoded->bwr;
+//         $os  = $decoded->os;
+//     } catch (Exception $e) {
+//         throw new Exception("Malformed/invalid token");
+//     }
 
-    $getUserPasswordSql = "SELECT password
-                           FROM users
-                           WHERE user_id = :user_id";
+//     $getUserPasswordSql = "SELECT password
+//                            FROM users
+//                            WHERE user_id = :user_id";
 
-    $stmt = $_this->db->prepare($getUserPasswordSql);
-    $stmt->bindParam("user_id", $sub);
+//     $stmt = $_this->db->prepare($getUserPasswordSql);
+//     $stmt->bindParam("user_id", $sub);
 
-    try {
-        $stmt->execute();
-        $password = $stmt->fetchObject()->password;
-    } catch (Exception $e) {
-        echo json_encode($e);
-        return NULL;
-    }
+//     try {
+//         $stmt->execute();
+//         $password = $stmt->fetchObject()->password;
+//     } catch (Exception $e) {
+//         echo json_encode($e);
+//         return NULL;
+//     }
 
-    // Get data about current browsing session
-    $domain = $_SERVER['HTTP_ORIGIN'];
-    $ipAddress = $_SERVER['REMOTE_ADDR'];
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    preg_match('#\((.*?)\)#', $user_agent, $match);
-    $start = strrpos($user_agent, ')') + 2;
-    $end = strrpos($user_agent, ' ');
-    $browser = substr($user_agent, $start, $end-$start);
-    $operating_system = $match[1];
+//     // Get data about current browsing session
+//     $domain = $_SERVER['HTTP_ORIGIN'];
+//     $ipAddress = $_SERVER['REMOTE_ADDR'];
+//     $user_agent = $_SERVER['HTTP_USER_AGENT'];
+//     preg_match('#\((.*?)\)#', $user_agent, $match);
+//     $start = strrpos($user_agent, ')') + 2;
+//     $end = strrpos($user_agent, ' ');
+//     $browser = substr($user_agent, $start, $end-$start);
+//     $operating_system = $match[1];
 
-    // Check if jwt claims match current user's session
-    if($iss != $domain || $ipa != $ipAddress || $bwr != $browser || $os != $operating_system || $pwd != $password || $exp < time()) {
-        throw new Exception("Invalid/expired token");
-    }
+//     // Check if jwt claims match current user's session
+//     if($iss != $domain || $ipa != $ipAddress || $bwr != $browser || $os != $operating_system || $pwd != $password || $exp < time()) {
+//         throw new Exception("Invalid/expired token");
+//     }
 
-    // Return true (is authenticated)
-    return true;
-}
+//     // Return true (is authenticated)
+//     return true;
+// }
 
 
-// Get user_id from token claim given token is already authenticated
-function getUserIdFromToken($_request) {
+// // Get user_id from token claim given token is already authenticated
+// function getUserIdFromToken($_request) {
 
-    $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
+//     $jwt = $_request->getHeaders()['HTTP_AUTHORIZATION'][0];
 
-    // Return user_id of -1 when no authorization given
-    if(empty($jwt)) {
-        return -1;
-    }
+//     // Return user_id of -1 when no authorization given
+//     if(empty($jwt)) {
+//         return -1;
+//     }
 
-    // Get user_id from sub (subject) claim of JWT
-    try {
-        $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
-        $userId = $decoded->sub;
-    } catch (Exception $e) {
-        throw new Exception("Malformed/invalid token");
-    }
+//     // Get user_id from sub (subject) claim of JWT
+//     try {
+//         $decoded = JWT::decode($jwt, getenv('JWT_SECRET'), array('HS256'));
+//         $userId = $decoded->sub;
+//     } catch (Exception $e) {
+//         throw new Exception("Malformed/invalid token");
+//     }
 
-    return $userId;
-}
+//     return $userId;
+// }
 
 /*************************************
                 Routes
 *************************************/
 
-// Home page
-$app->get('/', function ($request, $response, $args) {
-    $input = array('site' => 'api.kellenschmidt.com', 'referrer' => null);
+// // Home page
+// $app->get('/', function ($request, $response, $args) {
+//     $input = array('site' => 'api.kellenschmidt.com', 'referrer' => null);
     
-    // Log information about the visitor whenever the homepage is visited
-    logPageVisit($this, $input);
+//     // Log information about the visitor whenever the homepage is visited
+//     logPageVisit($this, $input);
 
-    // Render index view
-    return $this->renderer->render($response, 'index.phtml', $args);
+//     // Render index view
+//     return $this->renderer->render($response, 'index.phtml', $args);
     
-});
+// });
 
-// Return true if the API is not broken
-$app->get('/status', function ($request, $response, $args) {
+// // Return true if the API is not broken
+// $app->get('/status', function ($request, $response, $args) {
     
-    return $this->response->withJson(array("Does it work?" => true));
-});
+//     return $this->response->withJson(array("Does it work?" => true));
+// });
 
 // Log information whenever a home page is visited
 $app->post('/page-visit', function ($request, $response, $args) {
