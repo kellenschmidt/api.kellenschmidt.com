@@ -20,8 +20,8 @@ return [
         "db" => [
             "host" => "kspw-db",
             "dbname" => "personal_website",
-            "user" => "root",
-            "pass" => "pass"
+            "user" => "kellen",
+            "pass" => "test"
         ],
     ],
 ];
