@@ -1,0 +1,276 @@
+FORMAT: 1A
+
+# Kellen's API
+
+API for front-end to database communication on the kellenschmidt.com family of websites
+
+## API Homepage [/]
+
+### View homepage [GET]
+
+Display the homepage for the API with links to documentation and other resources.
+Log page visit.
+
++ Request (application/json)
+
+        {
+            
+        }
+        
++ Response 200
+
+        {
+        
+        }
+        
+## Page Visit Tracking [/page-visit]
+
+### Track a page visit [POST]
+
+Log ip address, browser, operating system of user as well as the time, site, and referrer whenever
+a page on the kellenschmidt.com family of pages is visited.
+
++ Request (application/json)
+
+        {
+            "site": "urlshortener.kellenschmidt",
+            "referrer": "https://kellenschmidt.com/"
+        }
+        
++ Response 200
+
+        {
+            "rows_affected": 1
+        }
+        
+## Modal Content [/modal/{name}]
+
+### Get static content for "Learn More" modals [GET]
+
+Get the header, body, GitHub link, and accent color content for the modal
+with the give name
+
++ Parameters
+    + name - Name of button that was clicked
+
++ Request (application/json)
+
+        {
+            
+        }
+        
++ Response 200
+
+        {
+            "name": "url-shortener-btn",
+            "header": "URL Shortener",
+            "body": "<h4>Achievements</h4><ul><li>Did great stuff</li><li>Made boatloads of cash</li></ul>",
+            "github-link": "https://github.com/kellenschmidt/repository-name"
+            "accent-color": "purple"
+        }
+        
+## View URLs [/urls]
+        
+### Get all visible urls [GET]
+
+Return the code, long url, creation date, and count for all visible URLs.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJKUzI1NiJ9.IkFycmF5LkFycmF5Ig.benYhHwsq2d_tIQK7NPmwShr0sfchW9fYhneL0XM-1A
+
+    + Body
+
+            {
+                
+            }
+        
++ Response 200
+
+        {
+            "data": [
+                {
+                    "code": "abc",
+                    "user_id": 3,
+                    "long_url": "https://github.com/mgechev/angular-seed/wiki/Deploying-prod-build-to-Apache-2/",
+                    "date_created": "2017-03-24 09:35:16",
+                    "count": 4,
+                    "visible": "1"
+                },
+                {
+                    "code": "123",
+                    "user_id": 3,
+                    "long_url": "https://arjunphp.com/creating-restful-api-slim-framework/",
+                    "date_created": "2017-03-29 10:01:34",
+                    "count": 1,
+                    "visible": "1"
+                },
+                {
+                    "code": "L0l",
+                    "user_id": 3,
+                    "long_url": "https://v4-alpha.getbootstrap.com/components/carousel/",
+                    "date_created": "2017-04-05 03:57:15",
+                    "count": 37,
+                    "visible": "1"
+                },
+            ]
+        }
+
+## Short URLs [/url]
+
+### Create new short URL [POST]
+
+Given a long url, create a short url and add that data including creation date to database.
+Log interaction.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJKUzI1NiJ9.IkFycmF5LkFycmF5Ig.benYhHwsq2d_tIQK7NPmwShr0sfchW9fYhneL0XM-1A
+
+    + Body
+
+            {
+                "long_url": "https://github.com/mgechev/angular-seed/wiki/Deploying-prod-build-to-Apache-2"
+            }
+        
++ Response 200
+
+        {
+            "code": "abc",
+            "user_id": 3,
+            "long_url": "https://github.com/mgechev/angular-seed/wiki/Deploying-prod-build-to-Apache-2",
+            "date_created": "2017-03-24 09:35:16",
+            "count": 5
+        }
+        
+### Remove short URL [PUT]
+
+Change the visibility state to hidden thereby "deleting" a URL by hiding it from view 
+even though it will still be functional.
+Log interaction.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJKUzI1NiJ9.IkFycmF5LkFycmF5Ig.benYhHwsq2d_tIQK7NPmwShr0sfchW9fYhneL0XM-1A
+
+    + Body
+
+            {
+                "code": "abc"
+            }
+        
++ Response 200
+
+        {
+            "rows affected": 1
+        }
+        
+## Short URL click [/hit/{code}]
+
+### Get long URL and increment URL hit count [POST]
+
+Get the long URL for given short URL. Increment number of page visits for the page with the given code.
+Log interaction.
+
++ Parameters
+    + code - Short code of which URL was visited
+
++ Request (application/json)
+
+        {
+            
+        }
+        
++ Response 200
+
+        {
+            "long_url": "https://github.com/mgechev/angular-seed/wiki/Deploying-prod-build-to-Apache-2"
+        }
+        
+## Register [/urlshortener/register]
+
+### Register for an account [POST]
+
+Create and account with a new user and generate a new token for that user and device
+
++ Request (application/json)
+
+        {
+            "email": "kobe@lakers.com",
+            "name": "Kobe Bryant",
+            "phone": 14567890432,
+            "password": "ball_is_life24"
+        }
+        
++ Response 200
+
+        {
+            "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJKUzI1NiJ9.IkFycmF5LkFycmF5Ig.benYhHwsq2d_tIQK7NPmwShr0sfchW9fYhneL0XM-1A",
+            "user": {
+                "email": "kobe@lakers.com",
+                "name": "Kobe Bryant",
+                "phone": 14567890432,
+                "password": "ball_is_life24",
+                "creation_date": 1243235664,
+                "updated_date": 1214565645,
+                "verified_phone": 0
+            }
+        }
+        
+## Login [/urlshortener/login]
+
+### Login to an account [POST]
+
+Login to an existing account and create a new token for that user and device
+
++ Request (application/json)
+
+        {
+            "email": "kobe@lakers.com",
+            "password": "ball_is_life24"
+        }
+        
++ Response 200
+
+        {
+            "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJKUzI1NiJ9.IkFycmF5LkFycmF5Ig.benYhHwsq2d_tIQK7NPmwShr0sfchW9fYhneL0XM-1A",
+            "user": {
+                "email": "kobe@lakers.com",
+                "name": "Kobe Bryant",
+                "phone": 14567890432,
+                "password": "ball_is_life24",
+                "creation_date": 1243235664,
+                "updated_date": 1214565645,
+                "verified_phone": 0
+            }
+        }
+
+## Authenticate [/urlshortener/authenticate]
+
+### Authenticate the current token [POST]
+
+Test the token to confirm that it is valid for the given user and device
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJKUzI1NiJ9.IkFycmF5LkFycmF5Ig.benYhHwsq2d_tIQK7NPmwShr0sfchW9fYhneL0XM-1A
+
+    + Body
+
+            {
+                
+            }
+        
++ Response 200
+
+        {
+            "authenticated": true
+        }
