@@ -1,10 +1,25 @@
 <?php
 
-$app->add(new Tuupola\Middleware\CorsMiddleware([
-    "origin" => ['http?://*.kellenschmidt.com','http?://kellenschmidt.com','http://*.kspw','http://kspw'],
-    "methods" => ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    "headers.allow" => ["Authorization"],
-    "headers.expose" => [],
-    "credentials" => false,
-    "cache" => 0,
-]));
+// $app->add(new Tuupola\Middleware\CorsMiddleware([
+//     "origin" => ['https://*.kellenschmidt.com','https://kellenschmidt.com','http://*.kspw','http://kspw'],
+//     "methods" => ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//     "headers.allow" => ["Authorization"],
+//     "headers.expose" => [],
+//     "credentials" => false,
+//     "cache" => 0,
+// ]));
+
+// Set header to allow CORS for cross-domain requests
+$http_origin = $_SERVER['HTTP_ORIGIN'];
+$kellenschmidt = "/^(https?:\/\/(?:.+\.)?kellenschmidt\.com(?::\d{1,5})?)$/";
+$kspw = "/^(https?:\/\/(?:.+\.)?kspw(?::\d{1,5})?)$/";
+$localhost = "/^(https?:\/\/(?:.+\.)?localhost(?::\d{1,5})?)$/";
+
+if(preg_match($kellenschmidt, $http_origin) || preg_match($kspw, $http_origin) || preg_match($localhost, $http_origin)) {
+    header("Access-Control-Allow-Origin: $http_origin");
+} else {
+    header("Access-Control-Allow-Origin: null");
+}
+
+header('Access-Control-Allow-Methods: GET,PUT,POST,DELETE,PATCH,OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');

@@ -3,7 +3,6 @@
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use \Firebase\JWT\JWT;
 
 $container = $app->getContainer();
 

@@ -1,4 +1,6 @@
-<?php 
+<?php
+
+use \Firebase\JWT\JWT;
 
 $jwtSecret = getenv('JWT_SECRET');
 
