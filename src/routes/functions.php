@@ -1,7 +1,5 @@
 <?php 
 
-use \Firebase\JWT\JWT;
-
 $jwtSecret = getenv('JWT_SECRET');
 
 /* Generate a random string, using a cryptographically secure 

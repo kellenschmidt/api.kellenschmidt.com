@@ -4,4 +4,5 @@
 $app->get('/status', function ($request, $response, $args) {
     
     return $this->response->withJson(array("Does it work?" => true));
+    
 });

@@ -1,8 +1,5 @@
 <?php
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-
 // Home page
 $app->get('/', function ($request, $response, $args) {
     $input = array('site' => 'api.kellenschmidt.com', 'referrer' => null);

@@ -1,6 +1,10 @@
 <?php
 // DIC configuration
 
+use Slim\Http\Request;
+use Slim\Http\Response;
+use \Firebase\JWT\JWT;
+
 $container = $app->getContainer();
 
 // view renderer
