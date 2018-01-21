@@ -20,8 +20,8 @@ return [
         "db" => [
             "host" => "kspw-db",
             "dbname" => "personal_website",
-            "user" => "kellen",
-            "pass" => "test"
+            "user" => getenv("MYSQL_USER"),
+            "pass" => getenv("MYSQL_PASSWORD")
         ],
     ],
 ];

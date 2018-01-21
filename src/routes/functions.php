@@ -2,7 +2,7 @@
 
 use \Firebase\JWT\JWT;
 
-$jwtSecret = getenv('JWT_SECRET');
+$jwtSecret = getenv("JWT_SECRET");
 
 /* Generate a random string, using a cryptographically secure 
  * pseudorandom number generator (random_int)
