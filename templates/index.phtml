@@ -25,17 +25,19 @@
             }
         
         </style>
-        <script>
-            // if(document.domain != "api.kellenschmidt.com") {
-            // window.location.replace("https://kellenschmidt.com");
-            // }
-            console.log("Document.domain: " + document.domain);
-        </script>
-        <!-- Google Analytics -->
-        <?php include_once("analyticstracking.php") ?>
     
     </head>
     <body>
+
+        <?php
+            if(getenv('ENV')=="prod" && $_SERVER['HTTP_ORIGIN'] != "https://api.kellenschmidt.com") {
+                header('Location: https://kellenschmidt.com');
+            }
+
+            // Google Analytics
+            include_once("analyticstracking.php")
+        ?>
+
         <h1>Welcome to the kellenschmidt.com API</h1>
         <p id="subtitle">For interacting with the kellenschmidt.com database</p>
         <p>View the documentation on Apiary:</p>
