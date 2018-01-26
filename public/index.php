@@ -29,7 +29,6 @@ require __DIR__ . '/../src/routes/functions.php';
 require __DIR__ . '/../src/routes/default.php';
 require __DIR__ . '/../src/routes/status.php';
 require __DIR__ . '/../src/routes/page-visit.php';
-require __DIR__ . '/../src/routes/modal.php';
 require __DIR__ . '/../src/routes/cards.php';
 require __DIR__ . '/../src/routes/chips.php';
 require __DIR__ . '/../src/routes/courses.php';

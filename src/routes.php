@@ -331,27 +331,6 @@
 //     return $this->response->withJson($return);
 // });
 
-// // Get content to put in modal
-// $app->get('/modal/[{name}]', function ($request, $response, $args) {
-
-//     $getModalSql = "SELECT * 
-//                     FROM modal_content
-//                     WHERE name = :name";
-
-//     $stmt = $this->db->prepare($getModalSql);
-//     $stmt->bindParam("name", $args['name']);
-
-//     try {
-//         $stmt->execute();
-//         $modal = $stmt->fetchObject();
-//     } catch (Exception $e) {
-//         return $this->response->withJson($e);
-//     }
-
-//     return $this->response->withJson($modal);
-
-// });
-
 // // Get content for project or work experience cards
 // $app->get('/cards/[{type}]', function ($request, $response, $args) {
     
