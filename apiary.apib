@@ -43,32 +43,6 @@ a page on the kellenschmidt.com family of pages is visited.
             "rows_affected": 1
         }
         
-## Modal Content [/modal/{name}]
-
-### Get static content for "Learn More" modals [GET]
-
-Get the header, body, GitHub link, and accent color content for the modal
-with the give name
-
-+ Parameters
-    + name - Name of button that was clicked
-
-+ Request (application/json)
-
-        {
-            
-        }
-        
-+ Response 200
-
-        {
-            "name": "url-shortener-btn",
-            "header": "URL Shortener",
-            "body": "<h4>Achievements</h4><ul><li>Did great stuff</li><li>Made boatloads of cash</li></ul>",
-            "github-link": "https://github.com/kellenschmidt/repository-name"
-            "accent-color": "purple"
-        }
-        
 ## View URLs [/urls]
         
 ### Get all visible urls [GET]
@@ -193,7 +167,7 @@ Log interaction.
             "long_url": "https://github.com/mgechev/angular-seed/wiki/Deploying-prod-build-to-Apache-2"
         }
         
-## Register [/urlshortener/register]
+## Register [/register]
 
 ### Register for an account [POST]
 
@@ -216,14 +190,14 @@ Create and account with a new user and generate a new token for that user and de
                 "email": "kobe@lakers.com",
                 "name": "Kobe Bryant",
                 "phone": 14567890432,
-                "password": "ball_is_life24",
+                "password": "$2y$10$aER2ZxRPxzi.rk/nfgmN0eng7XMM2hVwTRBv5SSxaQQYF1rty24E2",
                 "creation_date": 1243235664,
                 "updated_date": 1214565645,
                 "verified_phone": 0
             }
         }
         
-## Login [/urlshortener/login]
+## Login [/login]
 
 ### Login to an account [POST]
 
@@ -244,14 +218,14 @@ Login to an existing account and create a new token for that user and device
                 "email": "kobe@lakers.com",
                 "name": "Kobe Bryant",
                 "phone": 14567890432,
-                "password": "ball_is_life24",
+                "password": "$2y$10$aER2ZxRPxzi.rk/nfgmN0eng7XMM2hVwTRBv5SSxaQQYF1rty24E2",
                 "creation_date": 1243235664,
                 "updated_date": 1214565645,
                 "verified_phone": 0
             }
         }
 
-## Authenticate [/urlshortener/authenticate]
+## Authenticate [/authenticate]
 
 ### Authenticate the current token [POST]
 
@@ -273,4 +247,163 @@ Test the token to confirm that it is valid for the given user and device
 
         {
             "authenticated": true
+        }
+        
+## IR Projects and Work Experience Cards [/cards/{type}]
+
+### Get all cards of a type [GET]
+
+Return information for each of the projects or work experience cards.
+
++ Parameters
+    + type - Type of card to be displayed (0: Project, 1: Work Experience)
+
++ Request (application/json)
+
+        {
+
+        }
+        
++ Response 200
+
+        {
+            "data": [
+                {
+                    "card_id": "1",
+                    "id": "url-shortener",
+                    "card_type": "0",
+                    "title": "URL Shortener",
+                    "caption": "Take long URLs and compress them into short links which are easy to share, tweet, email! Created entirely from scratch in both an Angular 2 version and a PHP version.",
+                    "link": "",
+                    "router_link": "/url-shortener",
+                    "image_version": "1500603809",
+                    "theme_color": "#FE993A",
+                    "github_link": "https://github.com/kellenschmidt/kellenschmidt.com",
+                    "description": "<h1>URL Shortener</h1><p>More content here...</p>"
+                    "visible": 1
+                }
+            ]
+        }
+        
+## IR Skills Chips [/chips]
+
+### Get all of the chips [GET]
+
+Return data for all of the skills chips ordered by category and seperated by rows with id of "category-name" and title of the category title.
+
++ Request (application/json)
+
+        {
+
+        }
+        
++ Response 200
+
+        {
+            "data": [
+                {
+                    "chip_id": "0",
+                    "id": "category-heading",
+                    "title": "Languages",
+                    "category": "languages",
+                    "image_version": "",
+                    "color": "",
+                    "visible": "1"
+                },
+                {
+                    "chip_id": "1",
+                    "id": "html5",
+                    "title": "HTML",
+                    "category": "languages",
+                    "image_version": "1500581805",
+                    "color": "#9A9A9A",
+                    "visible": "1"
+                },
+                {
+                    "chip_id": "2",
+                    "id": "css3",
+                    "title": "CSS",
+                    "category": "languages",
+                    "image_version": "1500581806",
+                    "color": "#9A9A9A",
+                    "visible": "1"
+                }
+            ]
+        }
+        
+## IR School Courses [/courses]
+
+### Get all cards for courses carousel [GET]
+
+Get data for carousel of courses. Grouped into three courses per array item. Three cards on each carousel screen.
+
++ Request (application/json)
+
+        {
+
+        }
+        
++ Response 200
+
+        {
+            "data": [
+                [
+                    {
+                        "course_id": "0",
+                        "number": "CSE 5345",
+                        "name": "Advanced App Programming",
+                        "line_breaks": [
+                            1
+                        ],
+                        "visible": "1"
+                    },
+                    {
+                        "course_id": "1",
+                        "number": "CSE 5323",
+                        "name": "Mobile Apps for Sensing and Learning",
+                        "line_breaks": [
+                            0
+                        ],
+                        "visible": "1"
+                    },
+                    {
+                        "course_id": "2",
+                        "number": "CSE 4345",
+                        "name": "Software Engineering Principles",
+                        "line_breaks": [
+                            0
+                        ],
+                        "visible": "1"
+                    }
+                ],
+                [
+                    {
+                        "course_id": "3",
+                        "number": "CSE 3330",
+                        "name": "Database Concepts",
+                        "line_breaks": [
+                            2
+                        ],
+                        "visible": "1"
+                    },
+                    {
+                        "course_id": "4",
+                        "number": "CSE 2341",
+                        "name": "Data Structures",
+                        "line_breaks": [
+                            2
+                        ],
+                        "visible": "1"
+                    },
+                    {
+                        "course_id": "5",
+                        "number": "CSE 3345",
+                        "name": "Graphical User Interface Design",
+                        "line_breaks": [
+                            1
+                        ],
+                        "visible": "1"
+                    }
+                ]
+            ]
         }
