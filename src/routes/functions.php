@@ -2,8 +2,6 @@
 
 use \Firebase\JWT\JWT;
 
-$jwtSecret = getenv("JWT_SECRET");
-
 /* Generate a random string, using a cryptographically secure 
  * pseudorandom number generator (random_int)
  *
@@ -189,7 +187,7 @@ function generateToken($email, $_this) {
 
     // Create JWT
     try {
-        $jwt = JWT::encode($claims, $jwtSecret);
+        $jwt = JWT::encode($claims, getenv("JWT_SECRET"));
     } catch (Exception $e) {
         echo json_encode($e);
         return NULL;
@@ -211,7 +209,7 @@ function isAuthenticated($_request, $_this) {
 
     // Get claims from JWT
     try {
-        $decoded = JWT::decode($jwt, $jwtSecret, array('HS256'));
+        $decoded = JWT::decode($jwt, getenv("JWT_SECRET"), array('HS256'));
         $iss = $decoded->iss;
         $sub = $decoded->sub;
         $pwd = $decoded->pwd;
@@ -220,7 +218,7 @@ function isAuthenticated($_request, $_this) {
         $bwr = $decoded->bwr;
         $os  = $decoded->os;
     } catch (Exception $e) {
-        throw new Exception("Malformed/invalid token");
+        throw new Exception("Malformed/invalid token, " . $e->getMessage());
     }
 
     $getUserPasswordSql = "SELECT password
@@ -270,7 +268,7 @@ function getUserIdFromToken($_request) {
 
     // Get user_id from sub (subject) claim of JWT
     try {
-        $decoded = JWT::decode($jwt, $jwtSecret, array('HS256'));
+        $decoded = JWT::decode($jwt, getenv("JWT_SECRET"), array('HS256'));
         $userId = $decoded->sub;
     } catch (Exception $e) {
         throw new Exception("Malformed/invalid token");
