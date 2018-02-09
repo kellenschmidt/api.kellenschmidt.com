@@ -24,7 +24,6 @@ require __DIR__ . '/../src/dependencies.php';
 require __DIR__ . '/../src/middleware.php';
 
 // Register routes
-// require __DIR__ . '/../src/routes.php';
 require __DIR__ . '/../src/routes/functions.php';
 require __DIR__ . '/../src/routes/default.php';
 require __DIR__ . '/../src/routes/status.php';
