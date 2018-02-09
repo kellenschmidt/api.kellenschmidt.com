@@ -34,6 +34,11 @@
                 header('Location: https://kellenschmidt.com');
             }
 
+            $url = "kellenschmidt.com";
+            if(getenv('ENV')=="docker") {
+                $url = "kspw";
+            }
+
             // Google Analytics
             include_once("analyticstracking.php")
         ?>
@@ -45,8 +50,8 @@
         <p>View the project on GitHub:</p>
         <a href="https://github.com/kellenschmidt/api.kellenschmidt.com/"><img src="images/github.jpg" width=300 id="github"></a>
         <p>Go to Kellen's URL Shortener:</p>
-        <a href="https://kellenschmidt.com/url"><img src="images/url-shortener.png" height=100 id="url-shortener"></a>
+        <a href="http://<?= $url ?>/url"><img src="images/url-shortener.png" height=100 id="url-shortener"></a>
         <p>Go to Kellen's Personal Website:</p>
-        <a href="https://kellenschmidt.com/"><img src="images/personal-website.png" height=100 id="personal-website"></a>
+        <a href="http://<?= $url ?>/"><img src="images/personal-website.png" height=100 id="personal-website"></a>
     </body>
 </html>
