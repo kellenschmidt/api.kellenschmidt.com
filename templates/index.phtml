@@ -25,25 +25,33 @@
             }
         
         </style>
-	<script>
-	    if(document.domain != "api.kellenschmidt.com") {
-		window.location.replace("https://kellenschmidt.com");
-	    }
-	    console.log("Document.domain: " + document.domain);
-	</script>
-        <!-- Google Analytics -->
-        <?php include_once("analyticstracking.php") ?>
+    
     </head>
     <body>
+
+        <?php
+            if(getenv('ENV')=="prod" && $_SERVER['HTTP_ORIGIN'] != "https://api.kellenschmidt.com") {
+                header('Location: https://kellenschmidt.com');
+            }
+
+            $url = "kellenschmidt.com";
+            if(getenv('ENV')=="docker") {
+                $url = "kspw";
+            }
+
+            // Google Analytics
+            include_once("analyticstracking.php")
+        ?>
+
         <h1>Welcome to the kellenschmidt.com API</h1>
         <p id="subtitle">For interacting with the kellenschmidt.com database</p>
         <p>View the documentation on Apiary:</p>
-        <a href="http://docs.kellensurlshortener.apiary.io/"><img src="images/apiary.png" width=300 id="apiary"></a>
+        <a href="http://kspw.docs.apiary.io/"><img src="images/apiary.png" width=300 id="apiary"></a>
         <p>View the project on GitHub:</p>
         <a href="https://github.com/kellenschmidt/api.kellenschmidt.com/"><img src="images/github.jpg" width=300 id="github"></a>
         <p>Go to Kellen's URL Shortener:</p>
-        <a href="https://kellenschmidt.com/url"><img src="images/url-shortener.png" height=100 id="url-shortener"></a>
+        <a href="http://<?= $url ?>/url"><img src="images/url-shortener.png" height=100 id="url-shortener"></a>
         <p>Go to Kellen's Personal Website:</p>
-        <a href="https://kellenschmidt.com/"><img src="images/personal-website.png" height=100 id="personal-website"></a>
+        <a href="http://<?= $url ?>/"><img src="images/personal-website.png" height=100 id="personal-website"></a>
     </body>
 </html>

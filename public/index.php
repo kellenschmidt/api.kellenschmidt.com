@@ -24,7 +24,18 @@ require __DIR__ . '/../src/dependencies.php';
 require __DIR__ . '/../src/middleware.php';
 
 // Register routes
-require __DIR__ . '/../src/routes.php';
+require __DIR__ . '/../src/routes/functions.php';
+require __DIR__ . '/../src/routes/default.php';
+require __DIR__ . '/../src/routes/status.php';
+require __DIR__ . '/../src/routes/page-visit.php';
+require __DIR__ . '/../src/routes/cards.php';
+require __DIR__ . '/../src/routes/chips.php';
+require __DIR__ . '/../src/routes/courses.php';
+require __DIR__ . '/../src/routes/urls.php';
+require __DIR__ . '/../src/routes/url-hit.php';
+require __DIR__ . '/../src/routes/register.php';
+require __DIR__ . '/../src/routes/login.php';
+require __DIR__ . '/../src/routes/authenticate.php';
 
 // Run app
 $app->run();
