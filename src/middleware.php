@@ -1,14 +1,5 @@
 <?php
 
-// $app->add(new Tuupola\Middleware\CorsMiddleware([
-//     "origin" => ['https://*.kellenschmidt.com','https://kellenschmidt.com','http://*.kspw','http://kspw'],
-//     "methods" => ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-//     "headers.allow" => ["Authorization"],
-//     "headers.expose" => [],
-//     "credentials" => false,
-//     "cache" => 0,
-// ]));
-
 // Define regex for comparison with cross-domain origins
 $http_origin = $_SERVER['HTTP_ORIGIN'];
 $kellenschmidt = "/^(https?:\/\/(?:.+\.)?kellenschmidt\.com(?::\d{1,5})?)$/";
