@@ -30,10 +30,6 @@
     <body>
 
         <?php
-            if(getenv('ENV')=="prod" && $_SERVER['HTTP_ORIGIN'] != "https://api.kellenschmidt.com") {
-                header('Location: https://kellenschmidt.com');
-            }
-
             $url = "kellenschmidt.com";
             if(getenv('ENV')=="docker") {
                 $url = "kspw";
