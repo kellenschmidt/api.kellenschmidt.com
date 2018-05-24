@@ -1,4 +1,5 @@
 *.save
 *.swp
+*.env
 composer.phar
 vendor
