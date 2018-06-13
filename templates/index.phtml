@@ -2,13 +2,14 @@
 <html>
     <head>
         <meta charset="utf-8"/>
-        <title>kellenschmidt.com API</title>
-        <link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
+        <title>Kellenschmidt.com API</title>
+        <base href="/api/v1">
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
         <style>
             body {
                 margin:0;
                 padding:30px;
-                font:14px Helvetica,Arial,Verdana,sans-serif;
+                font:14px Roboto,Helvetica,Arial,Verdana,sans-serif;
             }
             h1 {
                 margin:0 0 0.25rem;
@@ -18,10 +19,10 @@
             }
             #subtitle {
                 font-size: 1.15rem;
-                margin: 0 0 1.5rem;
+                margin: 0 0 5rem;
             }
             img {
-                margin: 1rem 0 2rem;
+                margin: 0.75rem 0 2.25rem;
             }
         
         </style>
@@ -30,24 +31,19 @@
     <body>
 
         <?php
-            $url = "kellenschmidt.com";
-            if(getenv('ENV')=="docker") {
-                $url = "kspw";
-            }
-
             // Google Analytics
-            include_once("analyticstracking.php")
+            include_once("analyticstracking.php");
         ?>
 
         <h1>Welcome to the kellenschmidt.com API</h1>
         <p id="subtitle">For interacting with the kellenschmidt.com database</p>
         <p>View the documentation on Apiary:</p>
-        <a href="http://kspw.docs.apiary.io/"><img src="images/apiary.png" width=300 id="apiary"></a>
+        <a href="http://kspw.docs.apiary.io/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/apiary-logo" width=300 id="apiary"></a>
         <p>View the project on GitHub:</p>
-        <a href="https://github.com/kellenschmidt/api.kellenschmidt.com/"><img src="images/github.jpg" width=300 id="github"></a>
+        <a href="https://github.com/kellenschmidt/api.kellenschmidt.com/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/github-logo" width=300 id="github"></a>
         <p>Go to Kellen's URL Shortener:</p>
-        <a href="http://<?= $url ?>/url"><img src="images/url-shortener.png" height=100 id="url-shortener"></a>
+        <a href="http://kellenschmidt.com/url"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229057/url-shortener-logo" height=100 id="url-shortener"></a>
         <p>Go to Kellen's Personal Website:</p>
-        <a href="http://<?= $url ?>/"><img src="images/personal-website.png" height=100 id="personal-website"></a>
+        <a href="http://kellenschmidt.com/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229057/personal-website-logo" height=100 id="personal-website"></a>
     </body>
 </html>
