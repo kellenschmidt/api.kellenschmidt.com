@@ -1,10 +1,10 @@
-# docker build -t kellenschmidt/kspw-slimphp .
-# docker run --env-file ./kspw-slimphp.env -p 80:80 -d kellenschmidt/kspw-slimphp
+# docker build -t kellenschmidt/slimphp-api .
+# docker run --env-file ./slimphp-api.env -p 80:80 -d kellenschmidt/slimphp-api
 
-FROM php:7-apache
+FROM php:7.2-apache
 
-RUN mkdir /slim-api
-WORKDIR /slim-api
+RUN mkdir /slimphp-api
+WORKDIR /slimphp-api
 
 RUN apt-get update -y -qq && apt-get install -y -qq git wget zip unzip nano && apt-get -qq autoclean && \
     docker-php-ext-install pdo pdo_mysql mysqli
