@@ -6,7 +6,7 @@
 FROM php:7.2-apache
 
 ARG APP_VERSION
-ENV APP_VERSION=$APP_VERSION
+ENV APP_VER=$APP_VERSION
 
 RUN mkdir /slimphp-api
 WORKDIR /slimphp-api
