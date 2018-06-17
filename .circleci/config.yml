@@ -43,7 +43,7 @@ jobs:
           name: Build with Docker
           command: |
             TAG=v$CIRCLE_BUILD_NUM
-            docker build --buid-arg APP_VERSION=$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest .
+            docker build --build-arg APP_VERSION=$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest .
 
       - run:
           name: Upload to Docker Hub
