@@ -1,0 +1,97 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/php:7.2
+
+    working_directory: ~/repo
+
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "composer.lock" }}
+          - v1-dependencies-
+
+      - run: composer install -n --prefer-dist
+
+      - save_cache:
+          paths:
+            - ./vendor
+          key: v1-dependencies-{{ checksum "composer.lock" }}
+
+      - run: 
+          name: Run tests
+          command: mkdir -p ${TEST_RESULTS} && echo "No tests yet :(" > ${TEST_RESULTS}/test_results.txt
+
+      - store_test_results:
+          path: /tmp/test-results
+
+      - setup_remote_docker
+
+      - run: 
+          name: Build with Docker
+          command: |
+            TAG=v$CIRCLE_BUILD_NUM
+            docker build -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest .
+
+      - run:
+          name: Upload to Docker Hub
+          command: |
+            TAG=v$CIRCLE_BUILD_NUM
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG
+            docker push $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest
+
+  deploy-kellenforthewin:
+    machine:
+      enabled: true
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "f6:59:4f:20:95:32:55:c6:95:fc:43:5e:76:aa:ac:f4"
+      - run:
+          name: Deploy over SSH
+          command: |
+            ssh $SSH_USER@$SSH_HOST "bash ~/kspw-kubernetes/bin/deploy.sh $DOCKER_USER $CIRCLE_PROJECT_REPONAME"
+
+  deploy-kellenschmidtcom:
+    machine:
+      enabled: true
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "86:20:9b:53:2d:a6:f6:14:4e:02:64:27:87:d9:d6:b5"
+      - run:
+          name: Deploy over SSH
+          command: |
+            ssh $SSH_USER@$SSH_HOST "bash ~/kspw-kubernetes/bin/deploy.sh $DOCKER_USER $CIRCLE_PROJECT_REPONAME"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build:
+          context: kellenforthewin
+      - deploy-kellenforthewin:
+          requires:
+            - build
+          context: kellenforthewin
+          filters:
+            branches:
+              only: dev
+      - deploy-kellenschmidtcom:
+          requires:
+            - build
+          context: kellenschmidt.com
+          filters:
+            branches:
+              only: master
