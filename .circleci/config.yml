@@ -83,6 +83,9 @@ workflows:
     jobs:
       - build:
           context: kellenforthewin
+          filters:
+            branches:
+              only: dev
       - deploy-kellenforthewin:
           requires:
             - build
