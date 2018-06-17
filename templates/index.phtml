@@ -26,7 +26,7 @@
     }
     
     #version {
-      margin: 0 0 5rem;
+      margin: 0 0 4rem;
     }
     
     img {
@@ -50,7 +50,7 @@ if(getenv("APP_VERSION") !== FALSE) {
 
     <h1>Welcome to the kellenschmidt.com API</h1>
     <p id="subtitle">For interacting with the kellenschmidt.com database</p>
-    <span id="version"><?php $appVersion === "" ? "" : print("(Version: $appVersion)") ?></span>
+    <p id="version"><?php $appVersion === "" ? "" : print("(Version: $appVersion)") ?></p>
     <p>View the documentation on Apiary:</p>
     <a href="http://kspw.docs.apiary.io/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/apiary-logo" width=300 id="apiary"></a>
     <p>View the project on GitHub:</p>
