@@ -33,10 +33,15 @@
         <?php
             // Google Analytics
             include_once("analyticstracking.php");
+
+            $appVersion = "";
+            if(getenv("APP_VERSION") !== FALSE) {
+                $appVersion = getenv("APP_VERSION");
+            }
         ?>
 
         <h1>Welcome to the kellenschmidt.com API</h1>
-        <p id="subtitle">For interacting with the kellenschmidt.com database</p>
+        <p id="subtitle">For interacting with the kellenschmidt.com database <?php $appVersion === "" ? "" : "(Version: $appVersion)" ?></p>
         <p>View the documentation on Apiary:</p>
         <a href="http://kspw.docs.apiary.io/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/apiary-logo" width=300 id="apiary"></a>
         <p>View the project on GitHub:</p>

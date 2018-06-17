@@ -21,7 +21,9 @@ jobs:
           - v1-dependencies-{{ checksum "composer.lock" }}
           - v1-dependencies-
 
-      - run: composer install -n --prefer-dist
+      - run: 
+          name: Composer install
+          command: composer install -n --prefer-dist
 
       - save_cache:
           paths:
@@ -41,7 +43,7 @@ jobs:
           name: Build with Docker
           command: |
             TAG=v$CIRCLE_BUILD_NUM
-            docker build -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest .
+            docker build -e APP_VERSION=$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest .
 
       - run:
           name: Upload to Docker Hub

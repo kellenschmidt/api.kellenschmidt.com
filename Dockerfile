@@ -1,4 +1,6 @@
 # docker build -t kellenschmidt/slimphp-api .
+# OR (to include custom build number)
+# docker build -e APP_VERSION=v1 -t kellenschmidt/slimphp-api .
 # docker run --env-file ./slimphp-api.env -p 80:80 -d kellenschmidt/slimphp-api
 
 FROM php:7.2-apache
