@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>Kellenschmidt.com API</title>
+  <title>API - kellenschmidt.com</title>
   <base href="/api/v1">
   <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <style>
@@ -22,6 +22,10 @@
     
     #subtitle {
       font-size: 1.15rem;
+      margin: 0 0 0.25rem;
+    }
+    
+    #version {
       margin: 0 0 5rem;
     }
     
@@ -38,20 +42,15 @@
 // Google Analytics
 include_once("analyticstracking.php");
 
-print("getenv('APP_VER'): " . getenv("APP_VER") . "[end]");
-print("getenv('APP_VER') !== FALSE" . getenv("APP_VER") !== FALSE . "[end]");
 $appVersion = "";
-if(getenv("APP_VER") !== FALSE) {
-    $appVersion = getenv("APP_VER");
+if(getenv("APP_VERSION") !== FALSE) {
+    $appVersion = getenv("APP_VERSION");
 }
-print("appVersion: $appVersion");
-print("appVersion === '' -->" . $appVersion === "" . "[end]");
 ?>
 
     <h1>Welcome to the kellenschmidt.com API</h1>
-    <p id="subtitle">For interacting with the kellenschmidt.com database
-      <?php $appVersion === "" ? "" : print("(Version: $appVersion)") ?>
-    </p>
+    <p id="subtitle">For interacting with the kellenschmidt.com database</p>
+    <span id="version"><?php $appVersion === "" ? "" : print("(Version: $appVersion)") ?></span>
     <p>View the documentation on Apiary:</p>
     <a href="http://kspw.docs.apiary.io/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/apiary-logo" width=300 id="apiary"></a>
     <p>View the project on GitHub:</p>
