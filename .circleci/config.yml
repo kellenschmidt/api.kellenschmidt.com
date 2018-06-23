@@ -94,8 +94,6 @@ workflows:
             branches:
               only: dev
       - deploy-kellenschmidtcom:
-          requires:
-            - build
           context: kellenschmidt.com
           filters:
             branches:
