@@ -237,13 +237,13 @@ function isAuthenticated($_request, $_this) {
     }
     
     // Get data about current browsing session
-    $domain = $_SERVER['HTTP_ORIGIN'];
+    $domain = $_SERVER['HTTP_HOST'];
     $ipAddress = $_SERVER['REMOTE_ADDR'];
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    preg_match('#\((.*?)\)#', $user_agent, $match);
     $start = strrpos($user_agent, ')') + 2;
     $end = strrpos($user_agent, ' ');
     $browser = substr($user_agent, $start, $end-$start);
+    preg_match('#\((.*?)\)#', $user_agent, $match);
     $operating_system = $match[1];
     
     // $log_file_name = "/var/log/jwt-auth-errors.log";
