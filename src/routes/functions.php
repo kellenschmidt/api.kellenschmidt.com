@@ -173,7 +173,7 @@ function generateToken($email, $_this) {
     $operating_system = $match[1];
     
     $payload = array(
-        "iss" => $_SERVER['HTTP_ORIGIN'], // Domain name that issued the token i.e. https://kellenschmidt.com
+        "iss" => $_SERVER['HTTP_HOST'], // Domain name that issued the token i.e. kellenschmidt.com
         "iat" => time(),
         "exp" => time() + (3600 * 24 * 60), // Expiration time: 60 days
         "sub" => $userId, // user_id of the user that the token is being created for
