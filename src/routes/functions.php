@@ -264,12 +264,16 @@ function isAuthenticated($_request, $_this) {
     $stmt = $_this->db->prepare($auth_error_sql);
     $currentDateTime = date('Y/m/d H:i:s');
     $stmt->bindParam("error_datetime", $currentDateTime);
-    
+    $currentTime = time();
+
     // Check if jwt claims match current user's session
     if($iss != $domain) {
         // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed domain verification" . $iss . " != " . $domain;
         // fwrite($log_file, $output);
         $failed_property = "domain";
+        if(!isset($domain)) {
+            $domain = "";
+        }
         $stmt->bindParam("failed_property", $failed_property);
         $stmt->bindParam("jwt_value", $iss);
         $stmt->bindParam("browser_value", $domain);
@@ -279,6 +283,9 @@ function isAuthenticated($_request, $_this) {
         // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed ip address verification" . $ipa . " != " . $ipAddress;
         // fwrite($log_file, $output);
         $failed_property = "ip address";
+        if(!isset($ipAddress)) {
+            $ipAddress = "";
+        }
         $stmt->bindParam("failed_property", $failed_property);
         $stmt->bindParam("jwt_value", $ipa);
         $stmt->bindParam("browser_value", $ipAddress);
@@ -288,6 +295,9 @@ function isAuthenticated($_request, $_this) {
         // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed browser verification" . $bwr . " != " . $browser;
         // fwrite($log_file, $output);
         $failed_property = "browser";
+        if(!isset($browser)) {
+            $browser = "";
+        }
         $stmt->bindParam("failed_property", $failed_property);
         $stmt->bindParam("jwt_value", $bwr);
         $stmt->bindParam("browser_value", $browser);
@@ -297,6 +307,9 @@ function isAuthenticated($_request, $_this) {
         // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed operating system verification" . $os . " != " . $operating_system;
         // fwrite($log_file, $output);
         $failed_property = "operating system";
+        if(!isset($operating_system)) {
+            $operating_system = "";
+        }
         $stmt->bindParam("failed_property", $failed_property);
         $stmt->bindParam("jwt_value", $os);
         $stmt->bindParam("browser_value", $operating_system);
@@ -306,18 +319,24 @@ function isAuthenticated($_request, $_this) {
         // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed password verification" . $pwd . " != " . $password;
         // fwrite($log_file, $output);
         $failed_property = "password";
+        if(!isset($password)) {
+            $password = "";
+        }
         $stmt->bindParam("failed_property", $failed_property);
         $stmt->bindParam("jwt_value", $pwd);
         $stmt->bindParam("browser_value", $password);
         $stmt->execute();
         throw new Exception("Invalid/expired token");
-    } else if($exp < time()) {
+    } else if($exp < $currentTime) {
         // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed time verification" . $exp . " != " . time();
         // fwrite($log_file, $output);
         $failed_property = "time";
+        if(!isset($currentTime)) {
+            $currentTime = "";
+        }
         $stmt->bindParam("failed_property", $failed_property);
         $stmt->bindParam("jwt_value", $exp);
-        $stmt->bindParam("browser_value", $currentDateTime);
+        $stmt->bindParam("browser_value", $currentTime);
         $stmt->execute();
         throw new Exception("Invalid/expired token");
     }
