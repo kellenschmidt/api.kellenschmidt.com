@@ -246,30 +246,36 @@ function isAuthenticated($_request, $_this) {
     $browser = substr($user_agent, $start, $end-$start);
     $operating_system = $match[1];
     
+    try {
+        $handle = fopen('/var/log/jwt-auth-errors.log', 'w');
+    } catch (Exception $e) {
+        throw new Exception("Failed to open /var/www/jwt-auth-errors.log");
+    }
+
     // Check if jwt claims match current user's session
     if($iss != $domain) {
         $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed domain verification" . $iss . " != " . $domain;
-        fwrite(STDOUT, $output);
+        fwrite($handle, $output);
         throw new Exception("Invalid/expired token");
     } else if($ipa != $ipAddress) {
         $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed IP address verification" . $ipa . " != " . $ipAddress;
-        fwrite(STDOUT, $output);
+        fwrite($handle, $output);
         throw new Exception("Invalid/expired token");
     } else if($bwr != $browser) {
         $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed browser verification" . $bwr . " != " . $browser;
-        fwrite(STDOUT, $output);
+        fwrite($handle, $output);
         throw new Exception("Invalid/expired token");
     } else if($os != $operating_system) {
         $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed operating system verification" . $os . " != " . $operating_system;
-        fwrite(STDOUT, $output);
+        fwrite($handle, $output);
         throw new Exception("Invalid/expired token");
     } else if($pwd != $password) {
         $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed password verification" . $pwd . " != " . $password;
-        fwrite(STDOUT, $output);
+        fwrite($handle, $output);
         throw new Exception("Invalid/expired token");
     } else if($exp < time()) {
         $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed time verification" . $exp . " != " . time();
-        fwrite(STDOUT, $output);
+        fwrite($handle, $output);
         throw new Exception("Invalid/expired token");
     }
 
