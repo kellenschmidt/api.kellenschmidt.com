@@ -246,46 +246,79 @@ function isAuthenticated($_request, $_this) {
     $browser = substr($user_agent, $start, $end-$start);
     $operating_system = $match[1];
     
-    $log_file_name = '/var/log/jwt-auth-errors.log';
-    try {
-        if (!isset($log_file)) {
-            $log_file = fopen($log_file_name, 'w');
-        }
-    } catch (Exception $e) {
-        throw new Exception("Failed to open " . $log_file_name);
-    }
-
+    // $log_file_name = "/var/log/jwt-auth-errors.log";
+    // try {
+    //     if (!isset($log_file)) {
+    //         $log_file = fopen($log_file_name, "w");
+    //     }
+    // } catch (Exception $e) {
+    //     throw new Exception("Failed to open " . $log_file_name);
+    // }
+    
+    $auth_error_sql = "INSERT INTO auth_errors
+    SET error_datetime = :error_datetime,
+    failed_property = :failed_property,
+    jwt_value = :jwt_value,
+    browser_value = :browser_value";
+    
+    $stmt = $_this->db->prepare($auth_error_sql);
+    $currentDateTime = date('Y/m/d H:i:s');
+    $stmt->bindParam("error_datetime", $currentDateTime);
+    
     // Check if jwt claims match current user's session
     if($iss != $domain) {
-        $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed domain verification" . $iss . " != " . $domain;
-        fwrite($log_file, $output);
+        // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed domain verification" . $iss . " != " . $domain;
+        // fwrite($log_file, $output);
+        $stmt->bindParam("failed_property", "domain");
+        $stmt->bindParam("jwt_value", $iss);
+        $stmt->bindParam("browser_value", $domain);
+        $stmt->execute();
         throw new Exception("Invalid/expired token");
     } else if($ipa != $ipAddress) {
-        $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed IP address verification" . $ipa . " != " . $ipAddress;
-        fwrite($log_file, $output);
+        // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed ip address verification" . $ipa . " != " . $ipAddress;
+        // fwrite($log_file, $output);
+        $stmt->bindParam("failed_property", "ip address");
+        $stmt->bindParam("jwt_value", $ipa);
+        $stmt->bindParam("browser_value", $ipAddress);
+        $stmt->execute();
         throw new Exception("Invalid/expired token");
     } else if($bwr != $browser) {
-        $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed browser verification" . $bwr . " != " . $browser;
-        fwrite($log_file, $output);
+        // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed browser verification" . $bwr . " != " . $browser;
+        // fwrite($log_file, $output);
+        $stmt->bindParam("failed_property", "browser");
+        $stmt->bindParam("jwt_value", $bwr);
+        $stmt->bindParam("browser_value", $browser);
+        $stmt->execute();
         throw new Exception("Invalid/expired token");
     } else if($os != $operating_system) {
-        $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed operating system verification" . $os . " != " . $operating_system;
-        fwrite($log_file, $output);
+        // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed operating system verification" . $os . " != " . $operating_system;
+        // fwrite($log_file, $output);
+        $stmt->bindParam("failed_property", "operating system");
+        $stmt->bindParam("jwt_value", $os);
+        $stmt->bindParam("browser_value", $operating_system);
+        $stmt->execute();
         throw new Exception("Invalid/expired token");
     } else if($pwd != $password) {
-        $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed password verification" . $pwd . " != " . $password;
-        fwrite($log_file, $output);
+        // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed password verification" . $pwd . " != " . $password;
+        // fwrite($log_file, $output);
+        $stmt->bindParam("failed_property", "password");
+        $stmt->bindParam("jwt_value", $pwd);
+        $stmt->bindParam("browser_value", $password);
+        $stmt->execute();
         throw new Exception("Invalid/expired token");
     } else if($exp < time()) {
-        $output = "[" . date('Y/m/d H:i:s') . "] " . "Failed time verification" . $exp . " != " . time();
-        fwrite($log_file, $output);
+        // $output = "[". date('Y/m/d H:i:s') ."] " . "Failed time verification" . $exp . " != " . time();
+        // fwrite($log_file, $output);
+        $stmt->bindParam("failed_property", "time");
+        $stmt->bindParam("jwt_value", $exp);
+        $stmt->bindParam("browser_value", time());
+        $stmt->execute();
         throw new Exception("Invalid/expired token");
     }
-
+    
     // Return true (is authenticated)
     return true;
 }
-
 
 // Get user_id from token claim given token is already authenticated
 function getUserIdFromToken($_request) {
