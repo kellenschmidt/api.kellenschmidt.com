@@ -1,8 +1,10 @@
-# api.kellenschmidt.com
+# slimphp-api
+
+[![CircleCI](https://circleci.com/gh/kellenschmidt/slimphp-api.svg?style=svg)](https://circleci.com/gh/kellenschmidt/slimphp-api)
 
 RESTful API enabling database integration with the kellenschmidt.com suite of websites and applications.
 
-Accessed at [api.kellenschmidt.com](http://api.kellenschmidt.com)
+Accessed at [kellenschmidt.com/api/v1](https://kellenschmidt.com/api/v1)
 
 Documentation at [kspw.docs.apiary.io/](https://kspw.docs.apiary.io)
 
@@ -27,7 +29,7 @@ Accesses database to:
   - Courses carousel
 - Log information about page visitors
 
-http://kellenschmidt.com
+https://kellenschmidt.com
 
 ### URL Shortener in Angular
 
@@ -41,11 +43,24 @@ Access database to preform these actions:
 - Track data about all interactions
 - Log information about page visitors
 
-http://kellenschmidt.com/url
+https://kellenschmidt.com/url
 
 ## Local development
 
-Must have MySQL database running. Verify database connection settings in `/src/settings.php` before running.
+### With Docker
+
+Must have mysql database running. Must create `slimphp-api.env` with `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_DATABASE`, `MYSQL_PASSWORD`, and `JWT_SECRET` defined
+
+```sh
+docker build -t kellenschmidt/slimphp-api .
+docker run --env-file ./slimphp-api.env -p 8080:80 -d kellenschmidt/slimphp-api
+```
+
+Access at `localhost:8080`
+
+### Without Docker
+
+Must have mysql database running. Verify database connection settings in `/src/settings.php` before running.
 
 ```Shell
 git clone https://github.com/kellenschmidt/api.kellenschmidt.com.git
@@ -55,4 +70,4 @@ php composer.phar install
 php composer.phar start
 ```
 
-Visit `localhost:8080`
+Access at `localhost:8080`

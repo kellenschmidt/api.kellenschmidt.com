@@ -1,49 +1,64 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8"/>
-        <title>Kellenschmidt.com API</title>
-        <base href="/api/v1">
-        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <style>
-            body {
-                margin:0;
-                padding:30px;
-                font:14px Roboto,Helvetica,Arial,Verdana,sans-serif;
-            }
-            h1 {
-                margin:0 0 0.25rem;
-                font-size:48px;
-                font-weight:normal;
-                line-height:48px;
-            }
-            #subtitle {
-                font-size: 1.15rem;
-                margin: 0 0 5rem;
-            }
-            img {
-                margin: 0.75rem 0 2.25rem;
-            }
-        
-        </style>
+
+<head>
+  <meta charset="utf-8" />
+  <title>API - kellenschmidt.com</title>
+  <base href="/api/v1">
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      font: 14px Roboto, Helvetica, Arial, Verdana, sans-serif;
+    }
     
-    </head>
-    <body>
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 48px;
+      font-weight: normal;
+      line-height: 48px;
+    }
+    
+    #subtitle {
+      font-size: 1.15rem;
+      margin: 0 0 0.25rem;
+    }
+    
+    #version {
+      margin: 0 0 4rem;
+    }
+    
+    img {
+      margin: 0.75rem 0 2.25rem;
+    }
+  </style>
 
-        <?php
-            // Google Analytics
-            include_once("analyticstracking.php");
-        ?>
+</head>
 
-        <h1>Welcome to the kellenschmidt.com API</h1>
-        <p id="subtitle">For interacting with the kellenschmidt.com database</p>
-        <p>View the documentation on Apiary:</p>
-        <a href="http://kspw.docs.apiary.io/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/apiary-logo" width=300 id="apiary"></a>
-        <p>View the project on GitHub:</p>
-        <a href="https://github.com/kellenschmidt/api.kellenschmidt.com/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/github-logo" width=300 id="github"></a>
-        <p>Go to Kellen's URL Shortener:</p>
-        <a href="http://kellenschmidt.com/url"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229057/url-shortener-logo" height=100 id="url-shortener"></a>
-        <p>Go to Kellen's Personal Website:</p>
-        <a href="http://kellenschmidt.com/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229057/personal-website-logo" height=100 id="personal-website"></a>
-    </body>
+<body>
+
+  <?php
+// Google Analytics
+include_once("analyticstracking.php");
+
+$appVersion = "";
+if(getenv("APP_VERSION") !== FALSE) {
+    $appVersion = getenv("APP_VERSION");
+}
+?>
+
+    <h1>Welcome to the kellenschmidt.com API</h1>
+    <p id="subtitle">For interacting with the kellenschmidt.com database</p>
+    <p id="version"><?php $appVersion === "" ? "" : print("(Version: $appVersion)") ?></p>
+    <p>View the documentation on Apiary:</p>
+    <a href="http://kspw.docs.apiary.io/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/apiary-logo" width=300 id="apiary"></a>
+    <p>View the project on GitHub:</p>
+    <a href="https://github.com/kellenschmidt/api.kellenschmidt.com/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229056/github-logo" width=300 id="github"></a>
+    <p>Go to Kellen's URL Shortener:</p>
+    <a href="http://kellenschmidt.com/url"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229057/url-shortener-logo" height=100 id="url-shortener"></a>
+    <p>Go to Kellen's Personal Website:</p>
+    <a href="http://kellenschmidt.com/"><img src="https://res.cloudinary.com/kellenscloud/image/upload/f_auto,q_auto/v1527229057/personal-website-logo" height=100 id="personal-website"></a>
+</body>
+
 </html>
