@@ -11,8 +11,6 @@ jobs:
       TEST_RESULTS: /tmp/test-results
     steps:
       - checkout
-      - attach_workspace:
-          at: .
       - run: 
           name: Save version number
           command: echo "v$CIRCLE_BUILD_NUM" > app-version.txt
@@ -51,6 +49,13 @@ jobs:
             DOCKER_HUB_TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$DOCKER_USER/$CIRCLE_PROJECT_REPONAME:pull" | jq -r '.token')
             curl -H "Authorization: Bearer $DOCKER_HUB_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" https://registry.hub.docker.com/v2/$DOCKER_USER/$CIRCLE_PROJECT_REPONAME/manifests/latest | jq -r '.config.digest' > image_sha.txt
             cat image_sha.txt
+      - save_cache:
+          paths:
+            - public
+            - src
+            - templates
+            - vendor
+          key: dist-v1-{{ checksum "image_sha.txt" }}
       - save_cache:
           paths:
             - app-version.txt
@@ -93,17 +98,29 @@ jobs:
             cat image_sha.txt
       - restore_cache:
           keys:
+          - dist-v1-{{ checksum "image_sha.txt" }}
+      - restore_cache:
+          keys:
           - version-v1-{{ checksum "image_sha.txt" }}
       - run:
           name: "Move cached files to working directory"
           command: |
             mv /home/circleci/circleci-workspace/app-version.txt .
+            mkdir dist
+            mv /home/circleci/circleci-workspace/public ./dist
+            mv /home/circleci/circleci-workspace/src ./dist
+            mv /home/circleci/circleci-workspace/templates ./dist
+            mv /home/circleci/circleci-workspace/vendor ./dist
       - run:
           name: "Publish Release on GitHub"
           command: |
             VERSION=$(cat app-version.txt)
             ARTIFACT_DIR=artifacts
-            mkdir $ARTIFACT_DIR
+            ARTIFACT_NAME=dist_$VERSION
+            apk update
+            apk add zip
+            zip -r $ARTIFACT_DIR/$ARTIFACT_NAME.zip ./dist
+            tar -czf $ARTIFACT_DIR/$ARTIFACT_NAME.tar.gz ./dist
             ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 -delete $VERSION $ARTIFACT_DIR
 
 workflows:
