@@ -62,9 +62,7 @@ Access at `localhost:8080`
 
 Must have mysql database running. Verify database connection settings in `/src/settings.php` before running.
 
-```Shell
-git clone https://github.com/kellenschmidt/api.kellenschmidt.com.git
-cd api.kellenschmidt.com
+```sh
 sh install_composer.sh
 php composer.phar install
 php composer.phar start

@@ -1,50 +1,43 @@
-# PHP CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-php/ for more details
-#
+defaults: &defaults
+  working_directory: ~/circleci-workspace
+
 version: 2
 jobs:
   build:
+    <<: *defaults
     docker:
       - image: circleci/php:7.2
-
-    working_directory: ~/repo
-
     environment:
       TEST_RESULTS: /tmp/test-results
-
     steps:
       - checkout
-
+      - attach_workspace:
+          at: .
+      - run: 
+          name: Save version number
+          command: echo "v$CIRCLE_BUILD_NUM" > app-version.txt
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "composer.lock" }}
-          - v1-dependencies-
-
+          - dependencies-v1-{{ checksum "composer.lock" }}
+          - dependencies-v1-
       - run: 
           name: Composer install
           command: composer install -n --prefer-dist
-
       - save_cache:
           paths:
             - ./vendor
-          key: v1-dependencies-{{ checksum "composer.lock" }}
-
+          key: dependencies-v1-{{ checksum "composer.lock" }}
       - run: 
           name: Run tests
           command: mkdir -p ${TEST_RESULTS} && echo "No tests yet :(" > ${TEST_RESULTS}/test_results.txt
-
       - store_test_results:
           path: /tmp/test-results
-
       - setup_remote_docker
-
       - run: 
           name: Build with Docker
           command: |
             TAG=v$CIRCLE_BUILD_NUM
             docker build --build-arg APP_VERSION=$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG -t $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest .
-
       - run:
           name: Upload to Docker Hub
           command: |
@@ -52,6 +45,16 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:$TAG
             docker push $DOCKER_USER/${CIRCLE_PROJECT_REPONAME}:latest
+      - run:
+          name: "Get SHA of latest docker build"
+          command: |
+            DOCKER_HUB_TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$DOCKER_USER/$CIRCLE_PROJECT_REPONAME:pull" | jq -r '.token')
+            curl -H "Authorization: Bearer $DOCKER_HUB_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" https://registry.hub.docker.com/v2/$DOCKER_USER/$CIRCLE_PROJECT_REPONAME/manifests/latest | jq -r '.config.digest' > image_sha.txt
+            cat image_sha.txt
+      - save_cache:
+          paths:
+            - app-version.txt
+          key: version-v1-{{ checksum "image_sha.txt" }}
 
   deploy-kellenforthewin:
     machine:
@@ -76,6 +79,32 @@ jobs:
           name: Deploy over SSH
           command: |
             ssh $SSH_USER@$SSH_HOST "bash ~/kspw-kubernetes/bin/deploy.sh $DOCKER_USER $CIRCLE_PROJECT_REPONAME"
+  
+  publish-github-release:
+    <<: *defaults
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - run:
+          name: "Get SHA of latest docker build"
+          command: |
+            DOCKER_HUB_TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$DOCKER_USER/$CIRCLE_PROJECT_REPONAME:pull" | jq -r '.token')
+            curl -H "Authorization: Bearer $DOCKER_HUB_TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" https://registry.hub.docker.com/v2/$DOCKER_USER/$CIRCLE_PROJECT_REPONAME/manifests/latest | jq -r '.config.digest' > image_sha.txt
+            cat image_sha.txt
+      - restore_cache:
+          keys:
+          - version-v1-{{ checksum "image_sha.txt" }}
+      - run:
+          name: "Move cached files to working directory"
+          command: |
+            mv /home/circleci/circleci-workspace/app-version.txt .
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            VERSION=$(cat app-version.txt)
+            ARTIFACT_DIR=artifacts
+            mkdir $ARTIFACT_DIR
+            ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 -delete $VERSION $ARTIFACT_DIR
 
 workflows:
   version: 2
@@ -93,6 +122,11 @@ workflows:
           filters:
             branches:
               only: dev
+      - publish-github-release:
+          context: kellenschmidt.com
+          filters:
+            branches:
+              only: master
       - deploy-kellenschmidtcom:
           context: kellenschmidt.com
           filters:
