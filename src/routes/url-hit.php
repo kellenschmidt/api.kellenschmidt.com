@@ -16,7 +16,7 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
         return $this->response->withJson($e);
     }
 
-    $getLinkSql = "SELECT long_url
+    $getLinkSql = "SELECT long_url, user_id
                    FROM links
                    WHERE code = BINARY :code";
 
@@ -26,6 +26,7 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
     try {
         $stmt->execute();
         $long_url = $stmt->fetchObject()->long_url;
+        $user_id = $stmt->fetchObject()->user_id;
     } catch (Exception $e) {
         return $this->response->withJson($e);
     }
@@ -33,6 +34,6 @@ $app->post('/hit/[{code}]', function ($request, $response, $args) {
     // Log "click link" interaction
     logInteraction($this, 2, $args['code']);
 
-    return $this->response->withJson(array("long_url" => $long_url));
+    return $this->response->withJson(array("long_url" => $long_url, "user_id" => $user_id));
 
 });
