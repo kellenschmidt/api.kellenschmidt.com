@@ -55,6 +55,7 @@ jobs:
             - src
             - templates
             - vendor
+            - composer.json
           key: dist-v1-{{ checksum "image_sha.txt" }}
       - save_cache:
           paths:
@@ -111,6 +112,7 @@ jobs:
             mv /home/circleci/circleci-workspace/src ./dist
             mv /home/circleci/circleci-workspace/templates ./dist
             mv /home/circleci/circleci-workspace/vendor ./dist
+            mv /home/circleci/circleci-workspace/composer.json ./dist
       - run:
           name: "Publish Release on GitHub"
           command: |
@@ -119,6 +121,7 @@ jobs:
             ARTIFACT_NAME=dist_$VERSION
             apk update
             apk add zip
+            mkdir $ARTIFACT_DIR
             zip -r $ARTIFACT_DIR/$ARTIFACT_NAME.zip ./dist
             tar -czf $ARTIFACT_DIR/$ARTIFACT_NAME.tar.gz ./dist
             ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 -delete $VERSION $ARTIFACT_DIR
